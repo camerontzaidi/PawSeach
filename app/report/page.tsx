@@ -54,7 +54,7 @@ export default function ReportPage() {
           <section className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6">
             <h2 className="mb-5 text-2xl font-bold">Dog Information</h2>
             <div className="grid gap-4 md:grid-cols-2">
-              <input name="name" placeholder="Dog Name *" className={inputStyle} />
+              <input name="dogName" placeholder="Dog Name *" className={inputStyle} />
               <input name="breed" placeholder="Breed" className={inputStyle} />
               <input name="primaryColor" placeholder="Primary Color *" className={inputStyle} />
               <input name="secondaryColor" placeholder="Secondary Color" className={inputStyle} />
@@ -82,7 +82,7 @@ export default function ReportPage() {
               </label>
             </div>
             <textarea
-              name="distinctiveFeatures"
+              name="description"
               placeholder="Description and distinctive features..."
               className={`${inputStyle} mt-4 h-32 w-full`}
             />
@@ -97,6 +97,27 @@ export default function ReportPage() {
                 placeholder="Last seen location *"
                 className={inputStyle}
               />
+              <input
+                name="latitude"
+                type="number"
+                min="-90"
+                max="90"
+                step="0.000001"
+                placeholder="Latitude *"
+                className={inputStyle}
+              />
+              <input
+                name="longitude"
+                type="number"
+                min="-180"
+                max="180"
+                step="0.000001"
+                placeholder="Longitude *"
+                className={inputStyle}
+              />
+              <p className="text-sm text-[#b7d5ce] md:col-span-2">
+                Temporary inputs until the Mapbox location picker is connected.
+              </p>
               <label className="flex items-center gap-3 rounded-md border border-[#9bd8c9] p-3 md:col-span-2">
                 <input name="timeIsApproximate" type="checkbox" /> Last-seen time is approximate
               </label>

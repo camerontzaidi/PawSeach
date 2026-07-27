@@ -10,13 +10,9 @@ const optionalText = (max: number) =>
 
 export const missingReportSchema = z
   .object({
-    name: z.string().trim().min(1, "Dog name is required.").max(100),
+    dogName: z.string().trim().min(1, "Dog name is required.").max(100),
     breed: optionalText(100),
-    primaryColor: z
-      .string()
-      .trim()
-      .min(1, "Primary color is required.")
-      .max(50),
+    primaryColor: z.string().trim().min(1, "Primary color is required.").max(50),
     secondaryColor: optionalText(50),
     sex: z.enum(["male", "female", "unknown"]),
     estimatedBirthYear: z
@@ -32,19 +28,16 @@ export const missingReportSchema = z
           .optional(),
       ),
     size: z.enum(["small", "medium", "large", "unknown"]),
-    distinctiveFeatures: optionalText(2000),
+    description: optionalText(3000),
     microchipped: z.boolean(),
     lastSeenAt: z
       .string()
       .min(1, "Last-seen date and time are required.")
       .refine((value) => !Number.isNaN(Date.parse(value)), "Enter a valid date and time."),
     timeIsApproximate: z.boolean(),
-    locationDescription: z
-      .string()
-      .trim()
-      .min(1, "Last-seen location is required.")
-      .max(255),
-    circumstances: optionalText(3000),
+    locationDescription: z.string().trim().min(1, "Last-seen location is required.").max(255),
+    latitude: z.coerce.number().min(-90, "Latitude must be at least -90.").max(90),
+    longitude: z.coerce.number().min(-180, "Longitude must be at least -180.").max(180),
     rewardOffered: z.boolean(),
     rewardAmount: z
       .string()
@@ -74,19 +67,20 @@ export type MissingReportInput = z.infer<typeof missingReportSchema>;
 
 export function missingReportFromFormData(formData: FormData) {
   return {
-    name: String(formData.get("name") ?? ""),
+    dogName: String(formData.get("dogName") ?? ""),
     breed: String(formData.get("breed") ?? ""),
     primaryColor: String(formData.get("primaryColor") ?? ""),
     secondaryColor: String(formData.get("secondaryColor") ?? ""),
     sex: String(formData.get("sex") ?? "unknown"),
     estimatedBirthYear: String(formData.get("estimatedBirthYear") ?? ""),
     size: String(formData.get("size") ?? "unknown"),
-    distinctiveFeatures: String(formData.get("distinctiveFeatures") ?? ""),
+    description: String(formData.get("description") ?? ""),
     microchipped: formData.get("microchipped") === "on",
     lastSeenAt: String(formData.get("lastSeenAt") ?? ""),
     timeIsApproximate: formData.get("timeIsApproximate") === "on",
     locationDescription: String(formData.get("locationDescription") ?? ""),
-    circumstances: String(formData.get("circumstances") ?? ""),
+    latitude: String(formData.get("latitude") ?? ""),
+    longitude: String(formData.get("longitude") ?? ""),
     rewardOffered: formData.get("rewardOffered") === "on",
     rewardAmount: String(formData.get("rewardAmount") ?? ""),
   };

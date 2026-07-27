@@ -11,10 +11,10 @@ export type SubmitReportResult = {
   success: boolean;
   message: string;
   fieldErrors?: Record<string, string[]>;
-  reportId?: string;
+  dogId?: string;
 };
 
-const PHOTO_BUCKET = "missing-report-photos";
+const PHOTO_BUCKET = "dog-photos";
 const MAX_PHOTOS = 5;
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -76,53 +76,46 @@ export async function submitMissingDogReport(
     };
   }
 
-  const dogId = crypto.randomUUID();
-  const reportId = crypto.randomUUID();
   const uploadedPaths: string[] = [];
-  let dogCreated = false;
-  let reportCreated = false;
+  let dogId: string | null = null;
 
   try {
-    const { error: dogError } = await supabase.from("dogs").insert({
-      dog_id: dogId,
-      owner_id: user.id,
-      name: parsed.data.name,
-      breed: parsed.data.breed ?? null,
-      primary_color: parsed.data.primaryColor,
-      secondary_color: parsed.data.secondaryColor ?? null,
-      sex: parsed.data.sex,
-      estimated_birth_year: parsed.data.estimatedBirthYear ?? null,
-      size: parsed.data.size,
-      distinctive_features: parsed.data.distinctiveFeatures ?? null,
-      microchipped: parsed.data.microchipped,
-    });
+    const { data: dog, error: dogError } = await supabase
+      .from("dogs")
+      .insert({
+        owner_id: user.id,
+        dog_name: parsed.data.dogName,
+        breed: parsed.data.breed ?? null,
+        description: parsed.data.description ?? null,
+        primary_color: parsed.data.primaryColor,
+        secondary_color: parsed.data.secondaryColor ?? null,
+        sex: parsed.data.sex,
+        size: parsed.data.size,
+        estimated_birth_year: parsed.data.estimatedBirthYear ?? null,
+        microchipped: parsed.data.microchipped,
+        last_seen_at: new Date(parsed.data.lastSeenAt).toISOString(),
+        time_is_approximate: parsed.data.timeIsApproximate,
+        location_description: parsed.data.locationDescription,
+        latitude: parsed.data.latitude,
+        longitude: parsed.data.longitude,
+        reward_offered: parsed.data.rewardOffered,
+        reward_amount: parsed.data.rewardOffered ? parsed.data.rewardAmount : null,
+        status: "missing",
+      })
+      .select("id")
+      .single();
 
-    if (dogError) throw new Error(`Could not save the dog: ${dogError.message}`);
-    dogCreated = true;
+    if (dogError || !dog) {
+      throw new Error(`Could not save the report: ${dogError?.message ?? "No row returned."}`);
+    }
+    dogId = dog.id;
 
-    // Coordinates are temporarily set to 0 until the map/geocoding step is added.
-    // Replace these values with actual private/public coordinates in Week 4.
-    const { error: reportError } = await supabase.from("missing_reports").insert({
-      report_id: reportId,
-      dog_id: dogId,
-      last_seen_at: new Date(parsed.data.lastSeenAt).toISOString(),
-      time_is_approximate: parsed.data.timeIsApproximate,
-      location_description: parsed.data.locationDescription,
-      private_latitude: 0,
-      private_longitude: 0,
-      public_latitude: 0,
-      public_longitude: 0,
-      circumstances: parsed.data.circumstances ?? null,
-      reward_offered: parsed.data.rewardOffered,
-      reward_amount: parsed.data.rewardOffered ? parsed.data.rewardAmount : null,
-      report_status: "missing",
-    });
-
-    if (reportError) throw new Error(`Could not save the report: ${reportError.message}`);
-    reportCreated = true;
+    if (!dogId) {
+      throw new Error("Dog record was created without an ID.");
+    }
 
     for (const photo of photos) {
-      const path = `${user.id}/${reportId}/${crypto.randomUUID()}.${safeExtension(photo)}`;
+      const path = `${user.id}/${dogId}/${crypto.randomUUID()}.${safeExtension(photo)}`;
       const { error: uploadError } = await supabase.storage
         .from(PHOTO_BUCKET)
         .upload(path, photo, { contentType: photo.type, upsert: false });
@@ -131,15 +124,13 @@ export async function submitMissingDogReport(
       uploadedPaths.push(path);
     }
 
-    const photoRows = uploadedPaths.map((path) => ({
-      report_id: reportId,
-      photo_url: path,
+    const photoRows = uploadedPaths.map((storagePath, index) => ({
+      dog_id: dogId,
+      storage_path: storagePath,
+      is_primary: index === 0,
     }));
 
-    const { error: photoRowsError } = await supabase
-      .from("missing_report_photos")
-      .insert(photoRows);
-
+    const { error: photoRowsError } = await supabase.from("dog_photos").insert(photoRows);
     if (photoRowsError) {
       throw new Error(`Could not save photo records: ${photoRowsError.message}`);
     }
@@ -150,19 +141,15 @@ export async function submitMissingDogReport(
     return {
       success: true,
       message: "Your missing-dog report was submitted successfully.",
-      reportId,
+      dogId,
     };
   } catch (error) {
-    // Best-effort compensation for partial failures. A database RPC transaction
-    // is an even stronger option once the schema is stable.
+    // Best-effort rollback across Storage and database operations.
     if (uploadedPaths.length > 0) {
       await supabase.storage.from(PHOTO_BUCKET).remove(uploadedPaths);
     }
-    if (reportCreated) {
-      await supabase.from("missing_reports").delete().eq("report_id", reportId);
-    }
-    if (dogCreated) {
-      await supabase.from("dogs").delete().eq("dog_id", dogId);
+    if (dogId) {
+      await supabase.from("dogs").delete().eq("id", dogId).eq("owner_id", user.id);
     }
 
     return {
