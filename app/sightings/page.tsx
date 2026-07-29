@@ -10,17 +10,15 @@ export default function SightingsPage() {
         </h1>
 
         <p className="mt-3 max-w-2xl text-[#c3ded8]">
-          Help reunite a lost dog with their family.
-          Post information about an animal you found or search
-          for found dogs near you.
+          Whether you found a dog or are looking for a pet that was found,
+          PawSearch helps connect animals with their families.
         </p>
 
 
-        {/* Options */}
-        <section className="mt-10 grid gap-6 md:grid-cols-2">
 
+        {/* Post Found Dog */}
+        <section className="mt-10">
 
-          {/* Post Found Dog */}
           <div className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-8">
 
             <h2 className="text-2xl font-bold">
@@ -32,9 +30,8 @@ export default function SightingsPage() {
               description, and where you found them.
             </p>
 
-
             <a
-              href="/sightings/create"
+              href="/sightings/report"
               className="mt-6 inline-block rounded-md bg-[#fbb12c] px-6 py-3 font-bold text-[#003d35]"
             >
               Post Found Dog
@@ -42,31 +39,8 @@ export default function SightingsPage() {
 
           </div>
 
-
-
-          {/* Search Found Dogs */}
-          <div className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-8">
-
-            <h2 className="text-2xl font-bold">
-              Looking for Found Dogs?
-            </h2>
-
-            <p className="mt-4 text-[#c3ded8]">
-              Search reports from people who found animals
-              near your area.
-            </p>
-
-
-            <button
-              className="mt-6 rounded-md bg-[#078c78] px-6 py-3 font-bold text-white"
-            >
-              Search Found Dogs
-            </button>
-
-          </div>
-
-
         </section>
+
 
 
 
@@ -74,14 +48,21 @@ export default function SightingsPage() {
         <section className="mt-10 rounded-xl border border-[#1b5b51] bg-[#06483f] p-8">
 
           <h2 className="text-2xl font-bold">
-            Search by Location
+            Search Found Dogs
           </h2>
+
+
+          <p className="mt-3 text-[#c3ded8]">
+            Search reports from community members who found animals.
+            Enter your city or ZIP code to find possible matches.
+          </p>
 
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
 
 
             <div>
+
               <label className="mb-2 block font-semibold">
                 City
               </label>
@@ -95,6 +76,7 @@ export default function SightingsPage() {
 
 
             <div>
+
               <label className="mb-2 block font-semibold">
                 ZIP Code
               </label>
@@ -111,7 +93,7 @@ export default function SightingsPage() {
 
 
           <button
-            className="mt-6 rounded-md bg-[#078c78] px-8 py-3 font-bold"
+            className="mt-6 rounded-md bg-[#078c78] px-8 py-3 font-bold text-white"
           >
             Search
           </button>
@@ -121,7 +103,9 @@ export default function SightingsPage() {
 
 
 
-        {/* Recent Found Dogs Placeholder */}
+
+
+        {/* Recent Found Dogs */}
         <section className="mt-10">
 
           <h2 className="text-3xl font-bold">
@@ -129,14 +113,80 @@ export default function SightingsPage() {
           </h2>
 
 
-          <div className="mt-6 rounded-xl border border-[#1b5b51] bg-[#06483f] p-10 text-center">
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
 
-            <p className="text-[#c3ded8]">
-              Search results will appear here based on city
-              and ZIP code.
-            </p>
+
+            {/* Example Found Dog */}
+            <a
+              href="/sightings/test"
+              className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 transition hover:border-[#fbb12c]"
+            >
+
+              <div className="flex h-48 items-center justify-center rounded-lg bg-[#003d35] text-6xl">
+                🐕
+              </div>
+
+
+              <h3 className="mt-5 text-2xl font-bold">
+                Golden Retriever
+              </h3>
+
+
+              <p className="mt-2 text-[#c3ded8]">
+                Found near Fremont Community Park
+              </p>
+
+
+              <p className="mt-2 text-[#b7d5ce]">
+                Found on July 28, 2026
+              </p>
+
+
+              <span className="mt-4 inline-block font-bold text-[#fbb12c]">
+                View Report →
+              </span>
+
+            </a>
+
+
+
+
+
+            {/* Example Found Dog */}
+            <a
+              href="/sightings/test2"
+              className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 transition hover:border-[#fbb12c]"
+            >
+
+              <div className="flex h-48 items-center justify-center rounded-lg bg-[#003d35] text-6xl">
+                🐶
+              </div>
+
+
+              <h3 className="mt-5 text-2xl font-bold">
+                Brown Mixed Breed
+              </h3>
+
+
+              <p className="mt-2 text-[#c3ded8]">
+                Found near Central Fremont
+              </p>
+
+
+              <p className="mt-2 text-[#b7d5ce]">
+                Found on July 27, 2026
+              </p>
+
+
+              <span className="mt-4 inline-block font-bold text-[#fbb12c]">
+                View Report →
+              </span>
+
+            </a>
+
 
           </div>
+
 
         </section>
 
