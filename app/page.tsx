@@ -1,12 +1,22 @@
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#003d35] text-white">
-      {/* Header */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <h1 className="text-2xl font-bold tracking-tight">
-          🐾 PawSearch
-        </h1>
-      </header>
+    {/* Header */}
+    <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+
+      <h1 className="text-2xl font-bold tracking-tight">
+        🐾 PawSearch
+      </h1>
+
+
+      <a
+        href="/login"
+        className="rounded-md border border-[#1b5b51] px-5 py-2 font-semibold text-white transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
+      >
+        Login
+      </a>
+
+    </header>
 
       {/* Hero Section */}
       <section className="mx-auto flex max-w-4xl flex-col items-center px-6 pb-16 pt-16 text-center">
