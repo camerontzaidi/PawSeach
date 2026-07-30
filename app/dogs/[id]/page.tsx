@@ -114,17 +114,62 @@ export default function DogReportPage() {
             </div>
   
   
-            {/* Share Controls */}
+            {/* Share + Contact Owner Controls */}
             <div className="mt-6 rounded-lg border border-[#1b5b51] p-5">
-  
+
               <h3 className="text-xl font-bold">
                 Share This Report
               </h3>
-  
+
+              <p className="mt-3 text-[#c3ded8]">
+                Help spread the word and increase the chance of
+                bringing this pet home.
+              </p>
+
               <button className="mt-4 rounded-md bg-[#fbb12c] px-6 py-3 font-bold text-[#003d35]">
                 Copy Report Link
               </button>
-  
+
+
+              {/* Contact Owner */}
+              <div className="mt-8 rounded-lg border border-[#1b5b51] bg-[#003d35] p-5">
+
+                <h3 className="text-xl font-bold">
+                  Think You Found This Dog?
+                </h3>
+
+                <p className="mt-3 text-[#c3ded8]">
+                  If you believe you found this dog, you can send
+                  a message request to the owner.
+                </p>
+
+
+                <ul className="mt-4 space-y-2 text-sm text-[#b7d5ce]">
+
+                  <li>
+                    ✓ You can only send one message request
+                  </li>
+
+                  <li>
+                    ✓ Your contact information stays private
+                  </li>
+
+                  <li>
+                    ✓ The owner must accept before chatting
+                  </li>
+
+                </ul>
+
+
+                <a
+                  href="/dogs/test/contact"
+                  className="mt-5 inline-block rounded-md bg-[#078c78] px-6 py-3 font-bold text-white"
+                >
+                  Contact Owner
+                </a>
+
+              </div>
+
             </div>
   
           </section>
