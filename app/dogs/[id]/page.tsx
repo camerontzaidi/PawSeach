@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function DogReportPage() {
     // Temporary fake data
     // Later we will replace this with Supabase data
@@ -161,12 +163,12 @@ export default function DogReportPage() {
                 </ul>
 
 
-                <a
+                <Link
                   href="/dogs/test/contact"
                   className="mt-5 inline-block rounded-md bg-[#078c78] px-6 py-3 font-bold text-white"
                 >
                   Contact Owner
-                </a>
+                </Link>
 
               </div>
 

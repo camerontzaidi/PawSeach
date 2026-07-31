@@ -3,18 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import {
-  missingReportFromFormData,
-  missingReportSchema,
-} from "@/lib/validation/missing-report";
+  foundReportFromFormData,
+  foundReportSchema,
+} from "@/lib/validation/found-report";
 
-export type SubmitReportResult = {
+export type SubmitFoundReportResult = {
   success: boolean;
   message: string;
-  dogId?: string;
+  foundReportId?: string;
   fieldErrors?: Record<string, string[]>;
 };
 
-const PHOTO_BUCKET = "dog-photos";
+const PHOTO_BUCKET = "found-report-photos";
 const MAX_PHOTOS = 5;
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -26,7 +26,7 @@ function getPhotos(formData: FormData): File[] {
 }
 
 function validatePhotos(photos: File[]): string | null {
-  if (photos.length === 0) return "Upload at least one clear photo of the dog.";
+  if (photos.length === 0) return "Upload at least one clear photo of the animal.";
   if (photos.length > MAX_PHOTOS) return `Upload no more than ${MAX_PHOTOS} photos.`;
 
   for (const photo of photos) {
@@ -37,6 +37,7 @@ function validatePhotos(photos: File[]): string | null {
       return "Each photo must be 5 MB or smaller.";
     }
   }
+
   return null;
 }
 
@@ -46,10 +47,10 @@ function safeExtension(file: File): string {
   return "jpg";
 }
 
-export async function submitMissingDogReport(
-  formData: FormData
-): Promise<SubmitReportResult> {
-  const parsed = missingReportSchema.safeParse(missingReportFromFormData(formData));
+export async function submitFoundDogReport(
+  formData: FormData,
+): Promise<SubmitFoundReportResult> {
+  const parsed = foundReportSchema.safeParse(foundReportFromFormData(formData));
 
   if (!parsed.success) {
     return {
@@ -72,85 +73,86 @@ export async function submitMissingDogReport(
   if (authError || !user) {
     return {
       success: false,
-      message: "You must be signed in before submitting a missing-dog report.",
+      message: "You must be signed in before submitting a found-animal report.",
     };
   }
 
   const uploadedPaths: string[] = [];
-  let dogId: string | null = null;
+  let foundReportId: string | null = null;
 
   try {
-    const { data: dog, error: dogError } = await supabase
-      .from("dogs")
+    const { data: report, error: reportError } = await supabase
+      .from("found_reports")
       .insert({
-        owner_id: user.id,
-        dog_name: parsed.data.dogName,
+        reporter_id: user.id,
         breed: parsed.data.breed ?? null,
-        description: parsed.data.description ?? null,
-        circumstances: parsed.data.circumstances ?? null,
-        primary_color: parsed.data.primaryColor,
-        secondary_color: parsed.data.secondaryColor ?? null,
-        sex: parsed.data.sex,
+        color: parsed.data.color,
         size: parsed.data.size,
-        estimated_birth_year: parsed.data.estimatedBirthYear ?? null,
-        microchipped: parsed.data.microchipped,
-        last_seen_at: new Date(parsed.data.lastSeenAt).toISOString(),
-        time_is_approximate: parsed.data.timeIsApproximate,
-        location_description: parsed.data.locationDescription,
-        latitude: parsed.data.latitude,
-        longitude: parsed.data.longitude,
-        reward_offered: parsed.data.rewardOffered,
-        reward_amount: parsed.data.rewardOffered ? parsed.data.rewardAmount : null,
-        status: "missing",
+        collar_status: parsed.data.collarStatus,
+        found_date: parsed.data.foundDate,
+        city: parsed.data.city,
+        zip_code: parsed.data.zipCode,
+        details: parsed.data.details,
+        status: "open",
       })
       .select("id")
       .single();
 
-    if (dogError || !dog) {
-      throw new Error(`Could not save the report: ${dogError?.message ?? "No row returned."}`);
+    if (reportError || !report) {
+      throw new Error(
+        `Could not save the found-animal report: ${reportError?.message ?? "No row returned."}`,
+      );
     }
-    dogId = dog.id;
 
-    if (!dogId) {
-      throw new Error("Dog record was created without an ID.");
+    foundReportId = report.id;
+    if (!foundReportId) {
+      throw new Error("Found-animal report was created without an ID.");
     }
 
     for (const photo of photos) {
-      const path = `${user.id}/${dogId}/${crypto.randomUUID()}.${safeExtension(photo)}`;
+      const path = `${user.id}/${foundReportId}/${crypto.randomUUID()}.${safeExtension(photo)}`;
       const { error: uploadError } = await supabase.storage
         .from(PHOTO_BUCKET)
         .upload(path, photo, { contentType: photo.type, upsert: false });
 
-      if (uploadError) throw new Error(`Could not upload a photo: ${uploadError.message}`);
+      if (uploadError) {
+        throw new Error(`Could not upload a photo: ${uploadError.message}`);
+      }
       uploadedPaths.push(path);
     }
 
     const photoRows = uploadedPaths.map((storagePath, index) => ({
-      dog_id: dogId,
+      found_report_id: foundReportId,
       storage_path: storagePath,
       is_primary: index === 0,
     }));
 
-    const { error: photoRowsError } = await supabase.from("dog_photos").insert(photoRows);
+    const { error: photoRowsError } = await supabase
+      .from("found_report_photos")
+      .insert(photoRows);
+
     if (photoRowsError) {
       throw new Error(`Could not save photo records: ${photoRowsError.message}`);
     }
 
-    revalidatePath("/dogs");
-    revalidatePath("/report");
+    revalidatePath("/sightings");
+    revalidatePath("/sightings/report");
 
     return {
       success: true,
-      message: "Your missing-dog report was submitted successfully.",
-      dogId,
+      message: "Your found-animal report was submitted successfully.",
+      foundReportId,
     };
   } catch (error) {
-    // Best-effort rollback across Storage and database operations.
     if (uploadedPaths.length > 0) {
       await supabase.storage.from(PHOTO_BUCKET).remove(uploadedPaths);
     }
-    if (dogId) {
-      await supabase.from("dogs").delete().eq("id", dogId).eq("owner_id", user.id);
+    if (foundReportId) {
+      await supabase
+        .from("found_reports")
+        .delete()
+        .eq("id", foundReportId)
+        .eq("reporter_id", user.id);
     }
 
     return {
@@ -158,7 +160,7 @@ export async function submitMissingDogReport(
       message:
         error instanceof Error
           ? error.message
-          : "The report could not be submitted. Please try again.",
+          : "The found-animal report could not be submitted. Please try again.",
     };
   }
 }

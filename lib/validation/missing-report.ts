@@ -29,6 +29,7 @@ export const missingReportSchema = z
       ),
     size: z.enum(["small", "medium", "large", "unknown"]),
     description: optionalText(3000),
+    circumstances: optionalText(3000),
     microchipped: z.boolean(),
     lastSeenAt: z
       .string()
@@ -75,6 +76,7 @@ export function missingReportFromFormData(formData: FormData) {
     estimatedBirthYear: String(formData.get("estimatedBirthYear") ?? ""),
     size: String(formData.get("size") ?? "unknown"),
     description: String(formData.get("description") ?? ""),
+    circumstances: String(formData.get("circumstances") ?? ""),
     microchipped: formData.get("microchipped") === "on",
     lastSeenAt: String(formData.get("lastSeenAt") ?? ""),
     timeIsApproximate: formData.get("timeIsApproximate") === "on",

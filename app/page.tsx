@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#003d35] text-white">
@@ -42,12 +44,12 @@ export default function Home() {
             Report a Missing Pet
           </a>
 
-          <a
+          <Link
             href="/sightings"
             className="rounded-md bg-[#078c78] px-6 py-4 font-bold text-white transition hover:scale-[1.02] hover:bg-[#0aa58e]"
           >
             I Found an Animal
-          </a>
+          </Link>
         </div>
       </section>
 
@@ -71,7 +73,7 @@ export default function Home() {
 
       {/* Latest Reports */}
       <section className="mx-auto max-w-5xl px-6 py-16">
-        <a href="/dogs" className="block">
+        <Link href="/dogs" className="block">
           <div className="flex items-center justify-between">
             <h3 className="text-3xl font-bold">Latest Reports</h3>
 
@@ -86,7 +88,7 @@ export default function Home() {
               you.
             </p>
           </div>
-        </a>
+        </Link>
       </section>
 
       {/* Stories */}

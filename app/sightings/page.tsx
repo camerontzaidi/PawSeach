@@ -1,3 +1,4 @@
+import Link from "next/link";
 export default function SightingsPage() {
   return (
     <main className="min-h-screen bg-[#003d35] px-6 py-10 text-white">
@@ -26,16 +27,16 @@ export default function SightingsPage() {
             </h2>
 
             <p className="mt-4 text-[#c3ded8]">
-              Create a report with the dog's photo,
+              Create a report with the dog&apos;s photo,
               description, and where you found them.
             </p>
 
-            <a
+            <Link
               href="/sightings/report"
               className="mt-6 inline-block rounded-md bg-[#fbb12c] px-6 py-3 font-bold text-[#003d35]"
             >
               Post Found Dog
-            </a>
+            </Link>
 
           </div>
 
@@ -117,7 +118,7 @@ export default function SightingsPage() {
 
 
             {/* Example Found Dog */}
-            <a
+            <Link
               href="/sightings/test"
               className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 transition hover:border-[#fbb12c]"
             >
@@ -146,14 +147,14 @@ export default function SightingsPage() {
                 View Report →
               </span>
 
-            </a>
+            </Link>
 
 
 
 
 
             {/* Example Found Dog */}
-            <a
+            <Link
               href="/sightings/test2"
               className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 transition hover:border-[#fbb12c]"
             >
@@ -182,7 +183,7 @@ export default function SightingsPage() {
                 View Report →
               </span>
 
-            </a>
+            </Link>
 
 
           </div>
