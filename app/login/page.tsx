@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 export default function LoginPage() {
   const handleGoogleLogin = async () => {
     const supabase = createClient();
-    
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -26,13 +26,12 @@ export default function LoginPage() {
         </p>
 
         <section className="mt-10 rounded-xl border border-[#1b5b51] bg-[#06483f] p-8">
-          {/* Google Login Button */}
+          {/* Google Login */}
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="flex w-full items-center justify-center gap-3 rounded-md bg-white px-6 py-3 text-center font-bold text-[#003d35] transition hover:bg-gray-100 cursor-pointer"
+            className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-md bg-white px-6 py-3 font-bold text-[#003d35] transition hover:scale-[1.02]"
           >
-            {/* Google G Logo SVG */}
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
@@ -51,6 +50,7 @@ export default function LoginPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
+
             Continue with Google
           </button>
 
@@ -63,8 +63,8 @@ export default function LoginPage() {
 
           {/* Guest */}
           <a
-            href="/report"
-            className="block w-full rounded-md border border-[#1b5b51] px-6 py-3 text-center font-bold text-white transition hover:bg-[#1b5b51]/30"
+            href="/"
+            className="block w-full rounded-md border border-[#1b5b51] px-6 py-3 text-center font-bold text-white transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
           >
             Continue as Guest
           </a>
