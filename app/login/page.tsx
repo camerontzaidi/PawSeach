@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
@@ -62,12 +62,12 @@ export default function LoginPage() {
           </div>
 
           {/* Guest */}
-          <a
+          <Link
             href="/"
             className="block w-full rounded-md border border-[#1b5b51] px-6 py-3 text-center font-bold text-white transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
           >
             Continue as Guest
-          </a>
+          </Link>
         </section>
 
         <p className="mt-6 text-center text-sm text-[#b7d5ce]">

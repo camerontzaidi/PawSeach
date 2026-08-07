@@ -1,3 +1,4 @@
+import Link from "next/link";
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#003d35] text-white">
@@ -28,7 +29,7 @@ export default function Home() {
 
 
           {/* Report Missing Pet */}
-          <a
+          <Link
             href="/report"
             className="rounded-xl border border-[#1b5b51] bg-[#fbb12c] p-8 text-left text-[#003d35] transition hover:scale-[1.02]"
           >
@@ -40,13 +41,13 @@ export default function Home() {
               Lost your pet? Create a report with their information,
               last known location, and photo.
             </p>
-          </a>
+          </Link>
 
 
 
 
           {/* Report Found Pet */}
-          <a
+          <Link
             href="/sightings/report"
             className="rounded-xl border border-[#1b5b51] bg-[#078c78] p-8 text-left text-white transition hover:scale-[1.02]"
           >
@@ -58,13 +59,13 @@ export default function Home() {
               Found an animal? Submit details to help reconnect
               them with their owner.
             </p>
-          </a>
+          </Link>
 
 
 
 
           {/* Search Missing Pets */}
-          <a
+          <Link
             href="/dogs"
             className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-8 text-left transition hover:border-[#fbb12c]"
           >
@@ -76,13 +77,13 @@ export default function Home() {
               Search missing pet reports by city or ZIP code
               to help find a lost animal.
             </p>
-          </a>
+          </Link>
 
 
 
 
           {/* Search Found Dogs */}
-          <a
+          <Link
             href="/sightings"
             className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-8 text-left transition hover:border-[#fbb12c]"
           >
@@ -94,7 +95,7 @@ export default function Home() {
               Browse found animal reports near your area
               using location filters.
             </p>
-          </a>
+          </Link>
 
 
         </div>
@@ -107,7 +108,7 @@ export default function Home() {
       {/* How It Works */}
       <section className="border-t border-[#1b5b51] px-6 py-16">
 
-        <a href="/how-it-works" className="mx-auto block max-w-5xl">
+        <Link href="/how-it-works" className="mx-auto block max-w-5xl">
 
           <div className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-10 transition hover:border-[#fbb12c]">
 
@@ -128,7 +129,7 @@ export default function Home() {
 
           </div>
 
-        </a>
+        </Link>
 
       </section>
 
