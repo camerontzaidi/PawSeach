@@ -1,6 +1,8 @@
--- Run this in the Supabase SQL Editor before deploying the updated report form.
--- It aligns public.dogs with the fields submitted by app/report/actions.ts.
+-- Run this in the Supabase SQL Editor before deploying the updated missing-pet form.
+-- This migration aligns public.dogs with app/report/page.tsx and app/report/actions.ts.
+-- It is written to preserve existing data where possible.
 
+-- 1) Add columns used by the form/backend if they do not already exist.
 alter table public.dogs
   add column if not exists primary_color text,
   add column if not exists secondary_color text,
@@ -11,10 +13,31 @@ alter table public.dogs
   add column if not exists last_seen_at timestamp with time zone,
   add column if not exists time_is_approximate boolean not null default false,
   add column if not exists location_description text,
+  add column if not exists circumstances text,
   add column if not exists reward_offered boolean not null default false,
   add column if not exists reward_amount numeric(10,2);
 
--- Add constraints only if they do not already exist.
+-- 2) If the legacy last_seen_date column exists, copy those dates into last_seen_at
+--    only where last_seen_at has not already been populated.
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'dogs'
+      and column_name = 'last_seen_date'
+  ) then
+    execute $sql$
+      update public.dogs
+      set last_seen_at = last_seen_date::timestamp at time zone 'UTC'
+      where last_seen_at is null
+        and last_seen_date is not null
+    $sql$;
+  end if;
+end $$;
+
+-- 3) Add/retain data-quality constraints.
 do $$
 begin
   if not exists (select 1 from pg_constraint where conname = 'dogs_sex_check') then
@@ -42,11 +65,35 @@ begin
   end if;
 end $$;
 
--- Keep the existing last_seen_date for compatibility, but backfill last_seen_at.
-update public.dogs
-set last_seen_at = coalesce(last_seen_at, last_seen_date::timestamp at time zone 'UTC')
-where last_seen_at is null;
+-- 4) The UI/backend require these fields for all new submissions.
+--    Applying NOT NULL to an existing table can fail when old rows contain NULLs,
+--    so only tighten each column when existing data is already complete.
+do $$
+begin
+  if not exists (select 1 from public.dogs where primary_color is null) then
+    alter table public.dogs alter column primary_color set not null;
+  else
+    raise notice 'primary_color still has NULL rows; NOT NULL was not applied.';
+  end if;
 
+  if not exists (select 1 from public.dogs where last_seen_at is null) then
+    alter table public.dogs alter column last_seen_at set not null;
+  else
+    raise notice 'last_seen_at still has NULL rows; NOT NULL was not applied.';
+  end if;
+
+  if not exists (select 1 from public.dogs where location_description is null) then
+    alter table public.dogs alter column location_description set not null;
+  else
+    raise notice 'location_description still has NULL rows; NOT NULL was not applied.';
+  end if;
+end $$;
+
+-- 5) last_seen_at replaces the legacy date-only field.
+alter table public.dogs
+  drop column if exists last_seen_date;
+
+-- 6) Dog photos table used by the missing-pet submission backend.
 create table if not exists public.dog_photos (
   id uuid default gen_random_uuid() primary key,
   dog_id uuid references public.dogs(id) on delete cascade not null,
@@ -64,7 +111,7 @@ create index if not exists dogs_status_idx on public.dogs(status);
 create index if not exists dogs_location_idx on public.dogs(latitude, longitude);
 create index if not exists dog_photos_dog_id_idx on public.dog_photos(dog_id);
 
--- RLS for the application tables.
+-- 7) RLS for application tables.
 alter table public.dogs enable row level security;
 alter table public.dog_photos enable row level security;
 
@@ -105,12 +152,11 @@ with check (
   )
 );
 
--- Create the Storage bucket if it does not yet exist.
+-- 8) Storage bucket + policies.
 insert into storage.buckets (id, name, public)
 values ('dog-photos', 'dog-photos', true)
 on conflict (id) do nothing;
 
--- Storage object policies: each path starts with the authenticated user's UUID.
 drop policy if exists "Public can view dog photo files" on storage.objects;
 create policy "Public can view dog photo files"
 on storage.objects for select
