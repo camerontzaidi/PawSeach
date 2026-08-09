@@ -28,6 +28,10 @@ Any row with a null `profile_id` cannot submit a report until its profile row is
 
 Latitude and longitude are currently visible number inputs. They are required because the existing Supabase table marks them `not null`. When the Mapbox picker is ready, it should populate inputs named `latitude` and `longitude`; the server action will not need to change.
 
-## Existing `last_seen_date`
+## `last_seen_at` and legacy `last_seen_date`
 
-The migration retains `last_seen_date` for compatibility but adds `last_seen_at`, which preserves both date and time. New submissions write to `last_seen_at`. Once all pages use `last_seen_at`, `last_seen_date` can be removed in a later migration.
+The missing-pet flow now uses only `last_seen_at`, which preserves both date and time. During migration, any existing `last_seen_date` value is copied into `last_seen_at` when `last_seen_at` is empty, and then the legacy `last_seen_date` column is removed.
+
+## Missing-pet schema alignment update
+
+The missing-pet form now saves `circumstances` separately from `description`. The migration backfills `last_seen_at` from the legacy `last_seen_date` column when possible, then removes `last_seen_date`. Required form fields (`primary_color`, `last_seen_at`, and `location_description`) are tightened to `NOT NULL` only when existing rows contain no NULL values, so older incomplete data does not cause the migration to fail unexpectedly.

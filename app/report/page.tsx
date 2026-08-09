@@ -54,9 +54,9 @@ export default function ReportPage() {
           <section className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6">
             <h2 className="mb-5 text-2xl font-bold">Dog Information</h2>
             <div className="grid gap-4 md:grid-cols-2">
-              <input name="dogName" placeholder="Dog Name *" className={inputStyle} />
+              <input name="dogName" placeholder="Dog Name *" required className={inputStyle} />
               <input name="breed" placeholder="Breed" className={inputStyle} />
-              <input name="primaryColor" placeholder="Primary Color *" className={inputStyle} />
+              <input name="primaryColor" placeholder="Primary Color *" required className={inputStyle} />
               <input name="secondaryColor" placeholder="Secondary Color" className={inputStyle} />
               <select name="sex" defaultValue="unknown" className={inputStyle}>
                 <option value="unknown">Sex unknown</option>
@@ -91,15 +91,17 @@ export default function ReportPage() {
           <section className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6">
             <h2 className="mb-5 text-2xl font-bold">Last Seen Information</h2>
             <div className="grid gap-4 md:grid-cols-2">
-              <input name="lastSeenAt" type="datetime-local" className={inputStyle} />
+              <input name="lastSeenAt" type="datetime-local" required className={inputStyle} />
               <input
                 name="locationDescription"
                 placeholder="Last seen location *"
+                required
                 className={inputStyle}
               />
               <input
                 name="latitude"
                 type="number"
+                required
                 min="-90"
                 max="90"
                 step="0.000001"
@@ -109,6 +111,7 @@ export default function ReportPage() {
               <input
                 name="longitude"
                 type="number"
+                required
                 min="-180"
                 max="180"
                 step="0.000001"
@@ -151,6 +154,7 @@ export default function ReportPage() {
             <input
               name="photos"
               type="file"
+              required
               accept="image/jpeg,image/png,image/webp"
               multiple
               className="block w-full rounded-md border border-[#9bd8c9] bg-[#003d35] p-3 text-white"

@@ -87,6 +87,7 @@ export async function submitMissingDogReport(
         dog_name: parsed.data.dogName,
         breed: parsed.data.breed ?? null,
         description: parsed.data.description ?? null,
+        circumstances: parsed.data.circumstances ?? null,
         primary_color: parsed.data.primaryColor,
         secondary_color: parsed.data.secondaryColor ?? null,
         sex: parsed.data.sex,
