@@ -177,6 +177,10 @@ if (dogError || !dog) {
 
 dogId = dog.id;
 
+if (!dogId) {
+  throw new Error("Found-animal report was created without an ID.");
+}
+
 for (const photo of photos) {
   const path =
     `${user.id}/${dogId}/${crypto.randomUUID()}.${safeExtension(photo)}`;
