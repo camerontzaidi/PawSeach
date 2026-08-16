@@ -1,237 +1,198 @@
-"use client";
-
-import { useMemo, useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
 
-export default function SightingsPage() {
-  const dogs = [
-    {
-      id: "test",
-      breed: "Golden Retriever",
-      location: "Fremont Community Park",
-      city: "Fremont",
-      zip: "94538",
-      date: "July 28, 2026",
-    },
-    {
-      id: "test2",
-      breed: "Brown Mixed Breed",
-      location: "Central Fremont",
-      city: "Fremont",
-      zip: "94536",
-      date: "July 27, 2026",
-    },
-  ];
+type SearchParams = {
+  city?: string;
+  zip?: string;
+};
 
-  const [city, setCity] = useState("");
-  const [zip, setZip] = useState("");
-  const [searched, setSearched] = useState(false);
+type FoundReport = {
+  id: string;
+  breed: string | null;
+  color: string;
+  city: string;
+  zip_code: string;
+  found_at: string;
+  details: string | null;
+  status: string;
+};
 
-  const filteredDogs = useMemo(() => {
-    if (!searched) return dogs;
+type FoundPhoto = {
+  found_report_id: string;
+  storage_path: string;
+};
 
-    const citySearch = city.trim().toLowerCase();
+export default async function SightingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const city = params.city?.trim() ?? "";
+  const zipInput = params.zip?.trim() ?? "";
+  const zipCodes = zipInput
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
 
-    const zipSearch = zip
-      .split(",")
-      .map((value) => value.trim())
-      .filter(Boolean);
+  const supabase = await createClient();
 
-    return dogs.filter((dog) => {
-      const cityMatches =
-        !citySearch || dog.city.toLowerCase().includes(citySearch);
+  let query = supabase
+    .from("found_reports")
+    .select("id, breed, color, city, zip_code, found_at, details, status")
+    .neq("status", "closed")
+    .order("created_at", { ascending: false })
+    .limit(50);
 
-      const zipMatches =
-        zipSearch.length === 0 || zipSearch.includes(dog.zip);
-
-      return cityMatches && zipMatches;
-    });
-  }, [city, zip, searched]);
-
-  function handleSearch() {
-    setSearched(true);
+  if (city) {
+    query = query.ilike("city", `%${city}%`);
   }
 
-  function handleClear() {
-    setCity("");
-    setZip("");
-    setSearched(false);
+  if (zipCodes.length > 0) {
+    query = query.in("zip_code", zipCodes);
+  }
+
+  const { data, error } = await query;
+  const reports = (data ?? []) as FoundReport[];
+
+  const photoByReport = new Map<string, string>();
+  if (reports.length > 0) {
+    const { data: photoRows } = await supabase
+      .from("found_report_photos")
+      .select("found_report_id, storage_path")
+      .in(
+        "found_report_id",
+        reports.map((report) => report.id),
+      )
+      .eq("is_primary", true);
+
+    for (const row of (photoRows ?? []) as FoundPhoto[]) {
+      const { data: publicUrl } = supabase.storage
+        .from("found-report-photos")
+        .getPublicUrl(row.storage_path);
+      photoByReport.set(row.found_report_id, publicUrl.publicUrl);
+    }
   }
 
   return (
     <main className="min-h-screen bg-[#003d35] px-6 py-16 text-white">
       <section className="mx-auto max-w-5xl">
+        <h1 className="text-4xl font-bold">Search Found Dogs</h1>
 
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-bold">
-            Search Found Dogs
-          </h1>
+        <p className="mt-4 text-[#b7d5ce]">
+          Search found animal reports from community members. Use a city
+          or ZIP code to find possible matches.
+        </p>
 
-          <p className="mt-4 max-w-2xl text-[#b7d5ce]">
-            Search found animal reports from community members.
-            Use a city or ZIP code to find possible matches.
-          </p>
-        </div>
-
-        {/* Search */}
         <section className="mt-8 rounded-xl border border-[#1b5b51] bg-[#06483f] p-8">
-          <h2 className="text-2xl font-bold">
-            Find Found Dogs
-          </h2>
+          <h2 className="text-2xl font-bold">Find Found Dogs</h2>
 
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
-
-            {/* City */}
-            <div>
-              <label
-                htmlFor="city"
-                className="font-semibold"
-              >
-                City
-              </label>
-
-              <input
-                id="city"
-                type="text"
-                value={city}
-                onChange={(event) => setCity(event.target.value)}
-                placeholder="Example: Fremont"
-                className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white outline-none placeholder:text-[#9bbab3] focus:border-[#fbb12c]"
-              />
-
-              <p className="mt-2 text-sm text-[#b7d5ce]">
-                Search a broader area by city.
-              </p>
-            </div>
-
-            {/* ZIP */}
-            <div>
-              <label
-                htmlFor="zip"
-                className="font-semibold"
-              >
-                ZIP Codes
-              </label>
-
-              <input
-                id="zip"
-                type="text"
-                value={zip}
-                onChange={(event) => setZip(event.target.value)}
-                placeholder="Example: 94538, 94536"
-                className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white outline-none placeholder:text-[#9bbab3] focus:border-[#fbb12c]"
-              />
-
-              <p className="mt-2 text-sm text-[#b7d5ce]">
-                Add multiple ZIP codes separated by commas.
-              </p>
-            </div>
-          </div>
-
-          {/* Search Buttons */}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={handleSearch}
-              className="rounded-md bg-[#078c78] px-8 py-3 font-bold text-white transition hover:bg-[#067966]"
-            >
-              Search Found Dogs
-            </button>
-
-            {searched && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="rounded-md border border-[#1b5b51] px-8 py-3 font-semibold text-[#b7d5ce] transition hover:border-[#fbb12c] hover:text-white"
-              >
-                Clear Search
-              </button>
-            )}
-          </div>
-        </section>
-
-        {/* Results */}
-        <section className="mt-12">
-
-          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-            <div>
-              <h2 className="text-3xl font-bold">
-                {searched ? "Search Results" : "Found Dogs Near You"}
-              </h2>
-
-              <p className="mt-2 text-[#b7d5ce]">
-                {filteredDogs.length}{" "}
-                {filteredDogs.length === 1 ? "report" : "reports"} found
-              </p>
-            </div>
-          </div>
-
-          {/* Empty State */}
-          {filteredDogs.length === 0 ? (
-            <div className="mt-6 rounded-xl border border-[#1b5b51] bg-[#06483f] p-10 text-center">
-              <div className="text-5xl">
-                🐾
+          <form className="mt-6" method="get">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <label htmlFor="city" className="font-semibold">
+                  City
+                </label>
+                <input
+                  id="city"
+                  name="city"
+                  defaultValue={city}
+                  placeholder="Example: Fremont"
+                  className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white placeholder:text-[#9bbab3]"
+                />
+                <p className="mt-2 text-sm text-[#b7d5ce]">
+                  Search a broader area by city.
+                </p>
               </div>
 
-              <h3 className="mt-4 text-2xl font-bold">
-                No found dogs match your search
-              </h3>
-
-              <p className="mx-auto mt-3 max-w-md text-[#b7d5ce]">
-                Try a different city or ZIP code, or clear your
-                search to view all available reports.
-              </p>
-
-              <button
-                type="button"
-                onClick={handleClear}
-                className="mt-6 rounded-md bg-[#fbb12c] px-6 py-3 font-bold text-[#003d35]"
-              >
-                View All Reports
-              </button>
+              <div>
+                <label htmlFor="zip" className="font-semibold">
+                  ZIP Codes
+                </label>
+                <input
+                  id="zip"
+                  name="zip"
+                  defaultValue={zipInput}
+                  placeholder="Example: 94538, 94536"
+                  className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white placeholder:text-[#9bbab3]"
+                />
+                <p className="mt-2 text-sm text-[#b7d5ce]">
+                  Add multiple ZIP codes for a more specific search.
+                </p>
+              </div>
             </div>
+
+            <button className="mt-6 rounded-md bg-[#078c78] px-8 py-3 font-bold text-white">
+              Search Found Dogs
+            </button>
+          </form>
+        </section>
+
+        <section className="mt-12">
+          <h2 className="text-3xl font-bold">Found Dogs Near You</h2>
+
+          {error ? (
+            <p className="mt-6 rounded-lg border border-red-400 bg-red-900/30 p-4 text-red-100">
+              Unable to load found-animal reports right now.
+            </p>
+          ) : reports.length === 0 ? (
+            <p className="mt-6 rounded-lg border border-[#1b5b51] bg-[#06483f] p-6 text-[#c3ded8]">
+              No found-animal reports match this search yet.
+            </p>
           ) : (
             <div className="mt-6 grid gap-6 md:grid-cols-2">
+              {reports.map((report) => {
+                const photoUrl = photoByReport.get(report.id);
 
-              {filteredDogs.map((dog) => (
-                <Link
-                  key={dog.id}
-                  href={`/sightings/${dog.id}`}
-                  className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 transition hover:border-[#fbb12c] hover:shadow-lg"
-                >
-                  {/* Photo Placeholder */}
-                  <div className="flex h-48 items-center justify-center rounded-lg bg-[#003d35] text-6xl">
-                    🐶
-                  </div>
+                return (
+                  <Link
+                    key={report.id}
+                    href={`/sightings/${report.id}`}
+                    className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 transition hover:border-[#fbb12c]"
+                  >
+                    <div
+                      className="flex h-48 items-center justify-center rounded-lg bg-[#003d35] bg-cover bg-center text-6xl"
+                      style={
+                        photoUrl
+                          ? { backgroundImage: `url(${photoUrl})` }
+                          : undefined
+                      }
+                    >
+                      {!photoUrl && "🐶"}
+                    </div>
 
-                  {/* Breed */}
-                  <h3 className="mt-5 text-2xl font-bold">
-                    {dog.breed}
-                  </h3>
+                    <h3 className="mt-5 text-2xl font-bold">
+                      {report.breed || "Unknown breed"}
+                    </h3>
 
-                  {/* Location */}
-                  <p className="mt-3 text-[#c3ded8]">
-                    📍 Found near {dog.location}
-                  </p>
+                    <p className="mt-2 text-[#b7d5ce]">
+                      Color: {report.color}
+                    </p>
 
-                  {/* ZIP */}
-                  <p className="mt-2 text-[#b7d5ce]">
-                    ZIP: {dog.zip}
-                  </p>
+                    <p className="mt-3 text-[#c3ded8]">
+                      📍 Found near {report.city}
+                    </p>
 
-                  {/* Date */}
-                  <p className="mt-2 text-[#b7d5ce]">
-                    Found on {dog.date}
-                  </p>
+                    <p className="mt-2 text-[#b7d5ce]">
+                      ZIP: {report.zip_code}
+                    </p>
 
-                  {/* View Report */}
-                  <span className="mt-5 inline-block rounded-md bg-[#fbb12c] px-5 py-2 font-bold text-[#003d35]">
-                    View Report →
-                  </span>
-                </Link>
-              ))}
+                    <p className="mt-2 text-[#b7d5ce]">
+                      Found on {new Date(`${report.found_at}T00:00:00`).toLocaleDateString()}
+                    </p>
 
+                    {report.details && (
+                      <p className="mt-4 line-clamp-3 text-[#c3ded8]">
+                        {report.details}
+                      </p>
+                    )}
+
+                    <span className="mt-5 inline-block rounded-md bg-[#fbb12c] px-5 py-2 font-bold text-[#003d35]">
+                      View Report →
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>
