@@ -124,6 +124,8 @@ export async function submitFoundAnimalReport(
         found_at: parsed.data.dateFound,
         city: parsed.data.city,
         zip_code: parsed.data.zipCode,
+        latitude: parsed.data.latitude,
+        longitude: parsed.data.longitude,
         details: parsed.data.details ?? null,
         status: "unmatched",
       })
@@ -179,6 +181,7 @@ export async function submitFoundAnimalReport(
     }
 
     revalidatePath("/sightings");
+    revalidatePath("/map");
     revalidatePath(`/sightings/${reportId}`);
     revalidatePath("/");
 
