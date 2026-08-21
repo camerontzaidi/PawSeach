@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import ReportMap from "../../components/ReportMap";
 
 const dogs = [
   {
@@ -10,6 +11,8 @@ const dogs = [
     breed: "Golden Retriever",
     location: "Fremont, California",
     zip: "94538",
+    latitude: 37.5485,
+    longitude: -121.9886,
     description:
       "Friendly dog with a red collar. Last seen running near the neighborhood park.",
     status: "Missing",
@@ -46,6 +49,9 @@ export default function DogsPage() {
     setZip("");
     setSearched(false);
   }
+
+  const isFremontSearch =
+    city.trim().toLowerCase().includes("fremont");
 
   return (
     <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
@@ -155,6 +161,49 @@ export default function DogsPage() {
 
         </section>
 
+        {/* Map */}
+        <section className="mt-8">
+
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">
+              {isFremontSearch
+                ? "Missing Pets in Fremont"
+                : "Missing Pets Map"}
+            </h2>
+
+            <p className="mt-1 text-[#b7d5ce]">
+              {isFremontSearch
+                ? "Showing missing pet reports near Fremont."
+                : "Explore missing pet reports by location."}
+            </p>
+          </div>
+
+          <ReportMap
+            reports={filteredDogs.map((dog) => ({
+              id: dog.id,
+              name: dog.name,
+              breed: dog.breed,
+              location: dog.location,
+              latitude: dog.latitude,
+              longitude: dog.longitude,
+              status: "Missing" as const,
+            }))}
+            center={
+              isFremontSearch
+                ? {
+                    latitude: 37.5485,
+                    longitude: -121.9886,
+                  }
+                : {
+                    latitude: 39.8283,
+                    longitude: -98.5795,
+                  }
+            }
+            zoom={isFremontSearch ? 12 : 4}
+          />
+
+        </section>
+
         {/* Results */}
         <section className="mt-12">
 
@@ -162,12 +211,17 @@ export default function DogsPage() {
 
             <div>
               <h2 className="text-3xl font-bold">
-                {searched ? "Search Results" : "Missing Pets Near You"}
+                {searched
+                  ? "Search Results"
+                  : "Missing Pets Near You"}
               </h2>
 
               <p className="mt-1 text-[#b7d5ce]">
                 {filteredDogs.length}{" "}
-                {filteredDogs.length === 1 ? "report" : "reports"} found
+                {filteredDogs.length === 1
+                  ? "report"
+                  : "reports"}{" "}
+                found
               </p>
             </div>
 
@@ -175,6 +229,7 @@ export default function DogsPage() {
 
           {/* Empty State */}
           {searched && filteredDogs.length === 0 ? (
+
             <div className="mt-6 rounded-2xl border border-[#1b5b51] bg-[#06483f] px-6 py-12 text-center">
 
               <div className="text-5xl">
@@ -199,6 +254,7 @@ export default function DogsPage() {
               </button>
 
             </div>
+
           ) : (
 
             /* Results Grid */
