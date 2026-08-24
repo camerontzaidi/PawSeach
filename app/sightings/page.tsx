@@ -116,28 +116,62 @@ export default async function SightingsPage({
      Map center
   ----------------------------- */
 
-  const isCitySearch = city.length > 0;
+  const cityCoordinates: Record<
+    string,
+    { latitude: number; longitude: number }
+  > = {
+    fremont: {
+      latitude: 37.5485,
+      longitude: -121.9886,
+    },
+    "san jose": {
+      latitude: 37.3382,
+      longitude: -121.8863,
+    },
+    oakland: {
+      latitude: 37.8044,
+      longitude: -122.2712,
+    },
+    "san francisco": {
+      latitude: 37.7749,
+      longitude: -122.4194,
+    },
+    sacramento: {
+      latitude: 38.5816,
+      longitude: -121.4944,
+    },
+    "los angeles": {
+      latitude: 34.0522,
+      longitude: -118.2437,
+    },
+    "new york": {
+      latitude: 40.7128,
+      longitude: -74.006,
+    },
+  };
 
-  const mapCenter = isCitySearch
-    ? mapReports.length > 0
+  const normalizedCity = city.toLowerCase();
+
+  const searchedCityCoordinates =
+    cityCoordinates[normalizedCity];
+
+  const mapCenter =
+    mapReports.length > 0
       ? {
           latitude: mapReports[0].latitude,
           longitude: mapReports[0].longitude,
         }
-      : {
-          latitude: 39.8283,
-          longitude: -98.5795,
-        }
-    : {
-        latitude: 39.8283,
-        longitude: -98.5795,
-      };
+      : searchedCityCoordinates
+        ? searchedCityCoordinates
+        : {
+            latitude: 39.8283,
+            longitude: -98.5795,
+          };
 
-  const mapZoom = isCitySearch
-    ? mapReports.length > 0
+  const mapZoom =
+    mapReports.length > 0 || searchedCityCoordinates
       ? 12
-      : 4
-    : 4;
+      : 4;
 
   return (
     <main className="min-h-screen bg-[#003d35] px-6 py-16 text-white">
@@ -161,7 +195,6 @@ export default async function SightingsPage({
 
         {/* Search Card */}
         <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-5 shadow-lg sm:p-8">
-
           <h2 className="text-2xl font-bold">
             Find Found Dogs
           </h2>
@@ -171,7 +204,6 @@ export default async function SightingsPage({
           </p>
 
           <form className="mt-6" method="get">
-
             <div className="grid gap-6 md:grid-cols-2">
 
               {/* City */}
@@ -226,13 +258,11 @@ export default async function SightingsPage({
             >
               Search Found Dogs
             </button>
-
           </form>
         </section>
 
         {/* Map */}
         <section className="mt-8">
-
           <div className="mb-4">
             <h2 className="text-2xl font-bold">
               {city
@@ -252,12 +282,10 @@ export default async function SightingsPage({
             center={mapCenter}
             zoom={mapZoom}
           />
-
         </section>
 
         {/* Results */}
         <section className="mt-12">
-
           <div>
             <h2 className="text-3xl font-bold">
               {city || zipInput
@@ -276,16 +304,13 @@ export default async function SightingsPage({
 
           {/* Database Error */}
           {error ? (
-
             <p className="mt-6 rounded-lg border border-red-400 bg-red-900/30 p-4 text-red-100">
               Unable to load found-animal reports right now.
             </p>
-
           ) : reports.length === 0 ? (
 
             /* Empty State */
             <div className="mt-6 rounded-2xl border border-[#1b5b51] bg-[#06483f] px-6 py-12 text-center">
-
               <div className="text-5xl">
                 🔎
               </div>
@@ -298,16 +323,13 @@ export default async function SightingsPage({
                 No found-animal reports match this search yet.
                 Try another city or ZIP code.
               </p>
-
             </div>
 
           ) : (
 
             /* Results Grid */
             <div className="mt-6 grid gap-6 md:grid-cols-2">
-
               {reports.map((report) => {
-
                 const photoUrl =
                   photoByReport.get(report.id);
 
@@ -317,15 +339,13 @@ export default async function SightingsPage({
                     href={`/sightings/${report.id}`}
                     className="group overflow-hidden rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 transition hover:-translate-y-1 hover:border-[#fbb12c] hover:shadow-lg"
                   >
-
                     {/* Photo */}
                     <div
                       className="flex h-48 items-center justify-center rounded-lg bg-[#003d35] bg-cover bg-center text-6xl"
                       style={
                         photoUrl
                           ? {
-                              backgroundImage:
-                                `url(${photoUrl})`,
+                              backgroundImage: `url(${photoUrl})`,
                             }
                           : undefined
                       }
@@ -335,8 +355,7 @@ export default async function SightingsPage({
 
                     {/* Breed */}
                     <h3 className="mt-5 text-2xl font-bold">
-                      {report.breed ||
-                        "Unknown breed"}
+                      {report.breed || "Unknown breed"}
                     </h3>
 
                     {/* Color */}
@@ -373,15 +392,11 @@ export default async function SightingsPage({
                     <span className="mt-5 inline-block rounded-md bg-[#fbb12c] px-5 py-2 font-bold text-[#003d35]">
                       View Report →
                     </span>
-
                   </Link>
                 );
               })}
-
             </div>
-
           )}
-
         </section>
 
       </section>

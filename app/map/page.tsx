@@ -17,7 +17,7 @@ const reports = [
     location: "Central Fremont",
     latitude: 37.558,
     longitude: -121.97,
-    status: "Missing" as const,
+    status: "Found" as const,
   },
 ];
 
