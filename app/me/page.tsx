@@ -22,27 +22,35 @@ export default function MePage() {
         {/* HEADER */}
         <div>
           <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-            Me
+            My PawSearch
           </span>
 
-          <h1 className="mt-2 text-4xl font-bold">
-            My Account
+          <h1 className="mt-2 text-4xl font-bold sm:text-5xl">
+            Welcome back!
           </h1>
 
           <p className="mt-3 text-lg text-[#b7d5ce]">
-            Manage your location, reports, and missing pet searches.
+            Manage your location and stay connected to missing pets in your
+            area.
           </p>
         </div>
 
         {/* YOUR LOCATION */}
         <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
-          <h2 className="text-2xl font-bold">
-            Your Location
-          </h2>
+          <div>
+            <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+              Location
+            </span>
 
-          <p className="mt-2 text-[#b7d5ce]">
-            Enter your city and ZIP code to find missing pets in your area.
-          </p>
+            <h2 className="mt-2 text-2xl font-bold">
+              Your Location
+            </h2>
+
+            <p className="mt-2 text-[#b7d5ce]">
+              Save your city and ZIP code to make it easier to find missing
+              pets near you.
+            </p>
+          </div>
 
           <div className="mt-6 grid gap-5 md:grid-cols-2">
             <div>
@@ -97,16 +105,23 @@ export default function MePage() {
           </button>
 
           {saved && (
-            <p className="mt-4 font-semibold text-[#fbb12c]">
+            <p
+              role="status"
+              className="mt-4 font-semibold text-[#fbb12c]"
+            >
               ✓ Location saved
             </p>
           )}
         </section>
 
-        {/* MY REPORTS */}
+        {/* YOUR REPORTS */}
         <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
-          <h2 className="text-2xl font-bold">
-            My Reports
+          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+            Reports
+          </span>
+
+          <h2 className="mt-2 text-2xl font-bold">
+            Your Reports
           </h2>
 
           <p className="mt-2 text-[#b7d5ce]">
@@ -114,34 +129,40 @@ export default function MePage() {
             have submitted.
           </p>
 
-          <div className="mt-6 flex flex-col gap-4 rounded-xl bg-[#003d35] p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="text-lg font-bold">
-                Manage Your Reports
-              </h3>
+          <div className="mt-6 rounded-xl bg-[#003d35] p-6">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-lg font-bold">
+                  Manage Your Reports
+                </h3>
 
-              <p className="mt-1 text-sm text-[#b7d5ce]">
-                View reports, edit information, and update report statuses.
-              </p>
+                <p className="mt-1 text-sm text-[#b7d5ce]">
+                  View reports, edit information, and update report statuses.
+                </p>
+              </div>
+
+              <Link
+                href="/dashboard"
+                className="shrink-0 rounded-md bg-[#078c78] px-6 py-3 text-center font-bold text-white transition hover:bg-[#067966]"
+              >
+                View My Reports →
+              </Link>
             </div>
-
-            <Link
-              href="/dashboard"
-              className="shrink-0 rounded-md bg-[#078c78] px-6 py-3 text-center font-bold text-white transition hover:bg-[#067966]"
-            >
-              View My Reports →
-            </Link>
           </div>
         </section>
 
         {/* MISSING PETS NEAR YOU */}
         <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
-          <h2 className="text-2xl font-bold">
+          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+            Community
+          </span>
+
+          <h2 className="mt-2 text-2xl font-bold">
             Missing Pets Near You
           </h2>
 
           <p className="mt-2 text-[#b7d5ce]">
-            See missing pet reports around your saved location.
+            Explore missing pet reports around your saved location.
           </p>
 
           <div className="mt-6 flex flex-col items-center rounded-xl bg-[#003d35] p-8 text-center">
@@ -157,9 +178,9 @@ export default function MePage() {
 
             <p className="mt-1 text-sm text-[#b7d5ce]">
               {city || zip
-                ? `Based on ${
-                    city || "your selected area"
-                  }${zip ? `, ${zip}` : ""}.`
+                ? `Based on ${city || "your selected area"}${
+                    zip ? `, ${zip}` : ""
+                  }.`
                 : "Save your location above to search pets near you."}
             </p>
 
