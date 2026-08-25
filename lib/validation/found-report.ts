@@ -22,6 +22,14 @@ export const foundReportSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{5}$/, "Enter a valid 5-digit ZIP code."),
+  latitude: z.coerce
+    .number()
+    .min(-90, "Latitude must be at least -90.")
+    .max(90, "Latitude must be at most 90."),
+  longitude: z.coerce
+    .number()
+    .min(-180, "Longitude must be at least -180.")
+    .max(180, "Longitude must be at most 180."),
   details: optionalTrimmedString(2000),
 });
 
@@ -36,6 +44,8 @@ export function foundReportFromFormData(formData: FormData) {
     dateFound: String(formData.get("dateFound") ?? ""),
     city: String(formData.get("city") ?? ""),
     zipCode: String(formData.get("zip") ?? ""),
+    latitude: String(formData.get("latitude") ?? ""),
+    longitude: String(formData.get("longitude") ?? ""),
     details: String(formData.get("description") ?? ""),
   };
 }

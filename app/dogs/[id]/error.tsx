@@ -21,7 +21,7 @@ export default function DogReportError({
 
           {/* Heading */}
           <h1 className="mt-5 text-3xl font-bold sm:text-4xl">
-            We couldn't load this report
+            We couldn&apos;t load this report
           </h1>
 
           {/* Description */}

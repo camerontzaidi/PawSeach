@@ -277,7 +277,7 @@ export default function DogsPage() {
               </h3>
 
               <p className="mx-auto mt-2 max-w-lg text-[#b7d5ce]">
-                We couldn't find any missing pet reports matching
+                We couldn&apos;t find any missing pet reports matching
                 your search. Try another city or ZIP code.
               </p>
 

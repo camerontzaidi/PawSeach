@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+
 import Map, {
   GeolocateControl,
   Marker,
   NavigationControl,
+  type MapMouseEvent,
 } from "react-map-gl/mapbox";
+
 import "mapbox-gl/dist/mapbox-gl.css";
 
 type LocationPickerProps = {
@@ -209,12 +212,39 @@ export default function LocationPicker({
     }
   }
 
-  function handleMapClick(event: any) {
+  function updateInputValue(
+    fieldName: string,
+    value: string,
+  ) {
+    const input =
+      document.querySelector<HTMLInputElement>(
+        `input[name="${fieldName}"]`,
+      );
+
+    if (!input) {
+      return;
+    }
+
+    input.value = value;
+
+    input.dispatchEvent(
+      new Event("input", {
+        bubbles: true,
+      }),
+    );
+
+    input.dispatchEvent(
+      new Event("change", {
+        bubbles: true,
+      }),
+    );
+  }
+
+  function handleMapClick(event: MapMouseEvent) {
     const { lng, lat } = event.lngLat;
 
     setLatitude(lat);
     setLongitude(lng);
-
     updateLocationFields(lat, lng);
   }
 

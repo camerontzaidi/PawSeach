@@ -19,7 +19,7 @@ export default function DogsError({
           </div>
 
           <h1 className="mt-5 text-3xl font-bold sm:text-4xl">
-            We couldn't load missing pets
+            We couldn&apos;t load missing pets
           </h1>
 
           <p className="mx-auto mt-4 max-w-lg leading-relaxed text-[#b7d5ce]">
