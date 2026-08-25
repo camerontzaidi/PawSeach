@@ -148,7 +148,7 @@ export default function Navbar() {
                     onClick={() => setOpen(false)}
                     className="mt-3 block w-full rounded-md px-3 py-2 text-left font-semibold transition hover:bg-[#1b5b51] hover:text-[#fbb12c]"
                   >
-                    Me
+                    My Reports
                   </Link>
 
                   {/* Profile */}
@@ -157,7 +157,7 @@ export default function Navbar() {
                     onClick={() => setOpen(false)}
                     className="mt-1 block w-full rounded-md px-3 py-2 text-left transition hover:bg-[#1b5b51]"
                   >
-                    Profile
+                    My Information
                   </Link>
 
                   {/* Logout */}

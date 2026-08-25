@@ -45,39 +45,6 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Quick Actions */}
-        <section className="mt-8 grid gap-4 sm:grid-cols-2">
-          <Link
-            href="/report"
-            className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 transition hover:border-[#fbb12c]"
-          >
-            <div className="text-3xl">🐕</div>
-
-            <h2 className="mt-3 text-xl font-bold">
-              Report a Missing Pet
-            </h2>
-
-            <p className="mt-2 text-[#b7d5ce]">
-              Create a new missing pet report.
-            </p>
-          </Link>
-
-          <Link
-            href="/sightings"
-            className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 transition hover:border-[#fbb12c]"
-          >
-            <div className="text-3xl">🐾</div>
-
-            <h2 className="mt-3 text-xl font-bold">
-              Report a Found Animal
-            </h2>
-
-            <p className="mt-2 text-[#b7d5ce]">
-              Help reunite a found animal with its owner.
-            </p>
-          </Link>
-        </section>
-
         {/* Missing Reports */}
         <section className="mt-12">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -126,7 +93,6 @@ export default function DashboardPage() {
                   key={report.id}
                   className="overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f]"
                 >
-                  {/* Temporary photo */}
                   <div className="flex h-48 items-center justify-center bg-[#003d35] text-7xl">
                     {report.photo}
                   </div>

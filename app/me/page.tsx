@@ -3,6 +3,46 @@
 import { useState } from "react";
 import Link from "next/link";
 
+const recentActivity = [
+  {
+    icon: "🐕",
+    title: "Reported Max missing",
+    description: "Golden Retriever · Fremont, California",
+    date: "July 26, 2026",
+  },
+  {
+    icon: "📍",
+    title: "Reported a pet sighting",
+    description: "Near Central Fremont",
+    date: "July 28, 2026",
+  },
+  {
+    icon: "🎉",
+    title: "Buddy was reunited",
+    description: "Labrador Retriever",
+    date: "July 30, 2026",
+  },
+];
+
+const savedReports = [
+  {
+    id: "1",
+    name: "Max",
+    breed: "Golden Retriever",
+    location: "Fremont, California",
+    status: "Missing",
+    type: "missing",
+  },
+  {
+    id: "2",
+    name: "Buddy",
+    breed: "Labrador Retriever",
+    location: "San Jose, California",
+    status: "Found",
+    type: "found",
+  },
+];
+
 export default function MePage() {
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
@@ -18,7 +58,7 @@ export default function MePage() {
 
   return (
     <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         {/* HEADER */}
         <div>
           <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
@@ -26,16 +66,15 @@ export default function MePage() {
           </span>
 
           <h1 className="mt-2 text-4xl font-bold sm:text-5xl">
-            Welcome back!
+            My Reports & My Information
           </h1>
 
           <p className="mt-3 text-lg text-[#b7d5ce]">
-            Manage your location and stay connected to missing pets in your
-            area.
+            Manage your location, reports, and activity on PawSearch.
           </p>
         </div>
 
-        {/* YOUR LOCATION */}
+        {/* LOCATION */}
         <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
           <div>
             <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
@@ -114,19 +153,18 @@ export default function MePage() {
           )}
         </section>
 
-        {/* YOUR REPORTS */}
+        {/* MY REPORTS */}
         <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
           <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
             Reports
           </span>
 
           <h2 className="mt-2 text-2xl font-bold">
-            Your Reports
+            My Reports
           </h2>
 
           <p className="mt-2 text-[#b7d5ce]">
-            View and manage the missing pet and found animal reports you
-            have submitted.
+            View, edit, and manage your missing pet and found animal reports.
           </p>
 
           <div className="mt-6 rounded-xl bg-[#003d35] p-6">
@@ -137,7 +175,8 @@ export default function MePage() {
                 </h3>
 
                 <p className="mt-1 text-sm text-[#b7d5ce]">
-                  View reports, edit information, and update report statuses.
+                  Update report information, view details, and manage report
+                  statuses.
                 </p>
               </div>
 
@@ -192,6 +231,169 @@ export default function MePage() {
             </Link>
           </div>
         </section>
+
+        {/* RECENT ACTIVITY */}
+        <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+          <div>
+            <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+              Activity
+            </span>
+
+            <h2 className="mt-2 text-2xl font-bold">
+              Recent Activity
+            </h2>
+
+            <p className="mt-1 text-[#b7d5ce]">
+              Keep track of your recent activity on PawSearch.
+            </p>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {recentActivity.map((activity, index) => (
+              <div
+                key={index}
+                className="flex gap-4 rounded-xl border border-[#1b5b51] bg-[#003d35] p-4"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#06483f] text-xl">
+                  {activity.icon}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold">
+                    {activity.title}
+                  </p>
+
+                  <p className="mt-1 text-sm text-[#b7d5ce]">
+                    {activity.description}
+                  </p>
+
+                  <p className="mt-1 text-xs text-[#9bbab3]">
+                    {activity.date}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* SAVED REPORTS */}
+        <section className="mt-8">
+          <div>
+            <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+              Saved
+            </span>
+
+            <h2 className="mt-2 text-2xl font-bold">
+              Saved Reports
+            </h2>
+
+            <p className="mt-1 text-[#b7d5ce]">
+              Quickly return to reports you want to keep an eye on.
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
+            {savedReports.map((report) => (
+              <article
+                key={report.id}
+                className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold">
+                      {report.name}
+                    </h3>
+
+                    <p className="mt-1 text-[#b7d5ce]">
+                      {report.breed}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold ${
+                      report.status === "Missing"
+                        ? "bg-[#ef4444] text-white"
+                        : "bg-[#078c78] text-white"
+                    }`}
+                  >
+                    {report.status}
+                  </span>
+                </div>
+
+                <p className="mt-5 text-sm text-[#c3ded8]">
+                  📍 {report.location}
+                </p>
+
+                <Link
+                  href={
+                    report.type === "missing"
+                      ? `/dogs/${report.id}`
+                      : `/sightings/${report.id}`
+                  }
+                  className="mt-5 inline-block rounded-md border border-[#1b5b51] px-5 py-2 font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
+                >
+                  View Report
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* ACCOUNT INFORMATION */}
+        <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+            Account
+          </span>
+
+          <h2 className="mt-2 text-2xl font-bold">
+            My Information
+          </h2>
+
+          <p className="mt-2 text-[#b7d5ce]">
+            Manage your PawSearch account information and preferences.
+          </p>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <Link
+              href="/profile"
+              className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5 transition hover:border-[#fbb12c]"
+            >
+              <div className="text-2xl">👤</div>
+
+              <h3 className="mt-3 font-bold">
+                Profile
+              </h3>
+
+              <p className="mt-1 text-sm text-[#b7d5ce]">
+                View your account and personal information.
+              </p>
+            </Link>
+
+            <Link
+              href="/profile"
+              className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5 transition hover:border-[#fbb12c]"
+            >
+              <div className="text-2xl">🔔</div>
+
+              <h3 className="mt-3 font-bold">
+                Notifications
+              </h3>
+
+              <p className="mt-1 text-sm text-[#b7d5ce]">
+                Manage your PawSearch notification preferences.
+              </p>
+            </Link>
+          </div>
+        </section>
+
+        <div className="mt-10 text-center">
+          <Link
+            href="/"
+            className="font-semibold text-[#fbb12c] hover:text-[#ffc34d]"
+          >
+            ← Back to PawSearch
+          </Link>
+        </div>
       </div>
     </main>
   );
