@@ -61,6 +61,8 @@ function revalidateMissing(dogId: string) {
   revalidatePath(`/dogs/${dogId}`);
   revalidatePath("/map");
   revalidatePath("/profile");
+  revalidatePath("/me");
+  revalidatePath("/dashboard");
 }
 
 function revalidateFound(reportId: string) {
@@ -68,6 +70,8 @@ function revalidateFound(reportId: string) {
   revalidatePath(`/sightings/${reportId}`);
   revalidatePath("/map");
   revalidatePath("/profile");
+  revalidatePath("/me");
+  revalidatePath("/dashboard");
 }
 
 export async function updateMissingDogReport(

@@ -1,342 +1,125 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
-import ReportMap from "../../components/ReportMap";
+import { createClient } from "@/utils/supabase/server";
+import ReportMap from "@/components/ReportMap";
 
-const dogs = [
-  {
-    id: "test",
-    name: "Max",
-    breed: "Golden Retriever",
-    location: "Fremont, California",
-    zip: "94538",
-    latitude: 37.5485,
-    longitude: -121.9886,
-    description:
-      "Friendly dog with a red collar. Last seen running near the neighborhood park.",
-    status: "Missing",
-  },
-];
+type SearchParams = { city?: string; zip?: string };
 
-type MapCenter = {
-  latitude: number;
-  longitude: number;
+type DogRow = {
+  id: string;
+  dog_name: string;
+  breed: string | null;
+  location_description: string | null;
+  description: string | null;
+  status: string;
+  latitude: number | null;
+  longitude: number | null;
+  created_at: string;
 };
 
-const defaultMapCenter: MapCenter = {
-  latitude: 39.8283,
-  longitude: -98.5795,
-};
+type DogPhoto = { dog_id: string; storage_path: string };
 
-export default function DogsPage() {
-  const [city, setCity] = useState("");
-  const [zip, setZip] = useState("");
-  const [searched, setSearched] = useState(false);
-  const [mapCenter, setMapCenter] =
-    useState<MapCenter>(defaultMapCenter);
-  const [mapZoom, setMapZoom] = useState(4);
-  const [isSearchingLocation, setIsSearchingLocation] =
-    useState(false);
+export default async function DogsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const params = await searchParams;
+  const city = params.city?.trim() ?? "";
+  const zip = params.zip?.trim() ?? "";
+  const supabase = await createClient();
 
-  const filteredDogs = dogs.filter((dog) => {
-    const cityMatch =
-      !city ||
-      dog.location.toLowerCase().includes(city.toLowerCase());
+  let query = supabase
+    .from("dogs")
+    .select("id, dog_name, breed, location_description, description, status, latitude, longitude, created_at")
+    .in("status", ["missing", "spotted"])
+    .order("created_at", { ascending: false })
+    .limit(50);
 
-    const zipCodes = zip
-      .split(",")
-      .map((value) => value.trim())
-      .filter(Boolean);
+  if (city) query = query.ilike("location_description", `%${city}%`);
+  if (zip) query = query.ilike("location_description", `%${zip}%`);
 
-    const zipMatch =
-      zipCodes.length === 0 || zipCodes.includes(dog.zip);
+  const { data, error } = await query;
+  const dogs = (data ?? []) as DogRow[];
+  const photoByDog = new Map<string, string>();
 
-    return cityMatch && zipMatch;
-  });
+  if (dogs.length > 0) {
+    const { data: photoRows } = await supabase
+      .from("dog_photos")
+      .select("dog_id, storage_path")
+      .in("dog_id", dogs.map((dog) => dog.id))
+      .eq("is_primary", true);
 
-  async function handleSearch() {
-    setSearched(true);
-
-    const searchLocation = city.trim() || zip.trim();
-
-    if (!searchLocation) {
-      setMapCenter(defaultMapCenter);
-      setMapZoom(4);
-      return;
-    }
-
-    setIsSearchingLocation(true);
-
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          searchLocation,
-        )}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&limit=1&country=US`,
-      );
-
-      const data = await response.json();
-
-      if (data.features?.length > 0) {
-        const [longitude, latitude] =
-          data.features[0].center;
-
-        setMapCenter({
-          latitude,
-          longitude,
-        });
-
-        setMapZoom(zip.trim() ? 12 : 11);
-      }
-    } catch (error) {
-      console.error(
-        "Unable to find search location:",
-        error,
-      );
-    } finally {
-      setIsSearchingLocation(false);
+    for (const row of (photoRows ?? []) as DogPhoto[]) {
+      const { data: publicUrl } = supabase.storage.from("dog-photos").getPublicUrl(row.storage_path);
+      photoByDog.set(row.dog_id, publicUrl.publicUrl);
     }
   }
 
-  function clearSearch() {
-    setCity("");
-    setZip("");
-    setSearched(false);
-    setMapCenter(defaultMapCenter);
-    setMapZoom(4);
-  }
+  const mapReports = dogs
+    .filter((dog) => dog.latitude !== null && dog.longitude !== null)
+    .map((dog) => ({
+      id: dog.id,
+      name: dog.dog_name,
+      breed: dog.breed || "Unknown breed",
+      location: dog.location_description || "Location unavailable",
+      latitude: Number(dog.latitude),
+      longitude: Number(dog.longitude),
+      status: "Missing" as const,
+    }));
 
-  const mapReports = filteredDogs.map((dog) => ({
-    id: dog.id,
-    name: dog.name,
-    breed: dog.breed,
-    location: dog.location,
-    latitude: dog.latitude,
-    longitude: dog.longitude,
-    status: "Missing" as const,
-  }));
-
-  const searchedLocationLabel =
-    city.trim() || zip.trim();
+  const center = mapReports.length > 0
+    ? { latitude: mapReports[0].latitude, longitude: mapReports[0].longitude }
+    : { latitude: 39.8283, longitude: -98.5795 };
 
   return (
     <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
       <section className="mx-auto max-w-6xl">
-
-        {/* Header */}
         <div className="max-w-3xl">
-          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-            Missing Pets
-          </span>
-
-          <h1 className="mt-2 text-4xl font-bold sm:text-5xl">
-            Search Missing Pets
-          </h1>
-
-          <p className="mt-4 text-lg leading-relaxed text-[#b7d5ce]">
-            Search missing pet reports by city or ZIP code and help bring
-            a lost animal home.
-          </p>
+          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">Missing Pets</span>
+          <h1 className="mt-2 text-4xl font-bold sm:text-5xl">Search Missing Pets</h1>
+          <p className="mt-4 text-lg leading-relaxed text-[#b7d5ce]">Search live Supabase reports by city or ZIP text and help bring a lost animal home.</p>
         </div>
 
-        {/* Search Card */}
         <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-5 shadow-lg sm:p-8">
-          <div>
-            <h2 className="text-2xl font-bold">
-              Find Missing Pets
-            </h2>
-
-            <p className="mt-1 text-[#b7d5ce]">
-              Enter a location to narrow your search.
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-5 md:grid-cols-2">
-
-            {/* City */}
-            <div>
-              <label
-                htmlFor="city"
-                className="block font-semibold"
-              >
-                City
-              </label>
-
-              <input
-                id="city"
-                type="text"
-                value={city}
-                onChange={(event) => setCity(event.target.value)}
-                placeholder="Example: Fremont"
-                className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white outline-none placeholder:text-[#9bbab3] focus:border-[#fbb12c]"
-              />
-
-              <p className="mt-2 text-sm text-[#b7d5ce]">
-                Search a broader area by city.
-              </p>
+          <form method="get" className="grid gap-5 md:grid-cols-2">
+            <label className="font-semibold">City<input name="city" defaultValue={city} placeholder="Example: Fremont" className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3" /></label>
+            <label className="font-semibold">ZIP Code<input name="zip" defaultValue={zip} placeholder="Example: 94538" className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3" /></label>
+            <div className="md:col-span-2 flex gap-3">
+              <button className="rounded-md bg-[#fbb12c] px-8 py-3 font-bold text-[#003d35]">Search Missing Pets</button>
+              {(city || zip) && <Link href="/dogs" className="rounded-md border border-[#1b5b51] px-8 py-3 font-semibold">Clear</Link>}
             </div>
-
-            {/* ZIP */}
-            <div>
-              <label
-                htmlFor="zip"
-                className="block font-semibold"
-              >
-                ZIP Codes
-              </label>
-
-              <input
-                id="zip"
-                type="text"
-                value={zip}
-                onChange={(event) => setZip(event.target.value)}
-                placeholder="Example: 94538"
-                className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white outline-none placeholder:text-[#9bbab3] focus:border-[#fbb12c]"
-              />
-
-              <p className="mt-2 text-sm text-[#b7d5ce]">
-                Search a more specific area by ZIP code.
-              </p>
-            </div>
-
-          </div>
-
-          {/* Buttons */}
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={handleSearch}
-              disabled={isSearchingLocation}
-              className="rounded-md bg-[#fbb12c] px-8 py-3 font-bold text-[#003d35] transition hover:bg-[#ffc34d] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSearchingLocation
-                ? "Finding Location..."
-                : "Search Missing Pets"}
-            </button>
-
-            {(city || zip) && (
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="rounded-md border border-[#1b5b51] px-8 py-3 font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
-              >
-                Clear
-              </button>
-            )}
-          </div>
+          </form>
         </section>
 
-        {/* Map */}
         <section className="mt-8">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold">
-              {searchedLocationLabel
-                ? `Missing Pets Near ${searchedLocationLabel}`
-                : "Missing Pets Map"}
-            </h2>
-
-            <p className="mt-1 text-[#b7d5ce]">
-              {searchedLocationLabel
-                ? `Showing the map around ${searchedLocationLabel}.`
-                : "Explore missing pet reports across the United States."}
-            </p>
-          </div>
-
-          <ReportMap
-            reports={mapReports}
-            center={mapCenter}
-            zoom={mapZoom}
-          />
+          <h2 className="mb-4 text-2xl font-bold">Missing Pets Map</h2>
+          <ReportMap reports={mapReports} center={center} zoom={mapReports.length > 0 ? 11 : 4} />
         </section>
 
-        {/* Results */}
         <section className="mt-12">
-          <div>
-            <h2 className="text-3xl font-bold">
-              {searched
-                ? "Search Results"
-                : "Missing Pets Near You"}
-            </h2>
+          <h2 className="text-3xl font-bold">Search Results</h2>
+          <p className="mt-1 text-[#b7d5ce]">{dogs.length} {dogs.length === 1 ? "report" : "reports"} found</p>
 
-            <p className="mt-1 text-[#b7d5ce]">
-              {filteredDogs.length}{" "}
-              {filteredDogs.length === 1
-                ? "report"
-                : "reports"}{" "}
-              found
-            </p>
-          </div>
-
-          {/* Empty State */}
-          {searched && filteredDogs.length === 0 ? (
+          {error ? (
+            <p className="mt-6 rounded-lg border border-red-400 bg-red-900/30 p-4">Unable to load missing-pet reports right now.</p>
+          ) : dogs.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-[#1b5b51] bg-[#06483f] px-6 py-12 text-center">
-              <div className="text-5xl">🔎</div>
-
-              <h3 className="mt-4 text-2xl font-bold">
-                No missing pets found
-              </h3>
-
-              <p className="mx-auto mt-2 max-w-lg text-[#b7d5ce]">
-                We couldn&apos;t find any missing pet reports matching
-                your search. Try another city or ZIP code.
-              </p>
-
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="mt-6 rounded-md bg-[#fbb12c] px-6 py-3 font-bold text-[#003d35]"
-              >
-                Clear Search
-              </button>
+              <div className="text-5xl">🔎</div><h3 className="mt-4 text-2xl font-bold">No missing pets found</h3>
             </div>
           ) : (
             <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredDogs.map((dog) => (
-                <Link
-                  key={dog.id}
-                  href={`/dogs/${dog.id}`}
-                  className="group overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f] transition hover:-translate-y-1 hover:border-[#fbb12c] hover:shadow-lg"
-                >
-                  <div className="flex h-48 items-center justify-center bg-[#003d35] text-7xl transition group-hover:scale-[1.02]">
-                    🐕
-                  </div>
-
-                  <div className="p-6">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-2xl font-bold">
-                          {dog.name}
-                        </h3>
-
-                        <p className="mt-1 text-[#b7d5ce]">
-                          {dog.breed}
-                        </p>
-                      </div>
-
-                      <span className="rounded-full bg-[#fbb12c] px-3 py-1 text-xs font-bold text-[#003d35]">
-                        Missing
-                      </span>
+              {dogs.map((dog) => {
+                const photo = photoByDog.get(dog.id);
+                return (
+                  <Link key={dog.id} href={`/dogs/${dog.id}`} className="group overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f] transition hover:border-[#fbb12c]">
+                    <div className="flex h-48 items-center justify-center bg-[#003d35] bg-cover bg-center text-7xl" style={photo ? { backgroundImage: `url(${photo})` } : undefined}>{!photo && "🐕"}</div>
+                    <div className="p-6">
+                      <div className="flex items-start justify-between gap-3"><div><h3 className="text-2xl font-bold">{dog.dog_name}</h3><p className="mt-1 text-[#b7d5ce]">{dog.breed || "Unknown breed"}</p></div><span className="rounded-full bg-[#fbb12c] px-3 py-1 text-xs font-bold text-[#003d35]">Missing</span></div>
+                      <p className="mt-5 text-sm text-[#c3ded8]">📍 {dog.location_description || "Location unavailable"}</p>
+                      {dog.description && <p className="mt-4 line-clamp-3 text-sm text-[#c3ded8]">{dog.description}</p>}
                     </div>
-
-                    <div className="mt-5 space-y-2 text-sm text-[#c3ded8]">
-                      <p>📍 {dog.location}</p>
-                      <p>📮 ZIP: {dog.zip}</p>
-                    </div>
-
-                    <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-[#c3ded8]">
-                      {dog.description}
-                    </p>
-
-                    <div className="mt-5 font-bold text-[#fbb12c]">
-                      View Full Report →
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>
-
       </section>
     </main>
   );
