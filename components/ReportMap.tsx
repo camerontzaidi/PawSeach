@@ -84,9 +84,18 @@ export default function ReportMap({
           >
             <button
               type="button"
-              className="cursor-pointer text-4xl transition hover:scale-125"
+              aria-label={
+                report.status === "Missing"
+                  ? `Missing pet: ${report.name}`
+                  : `Found animal: ${report.name}`
+              }
+              className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-4 border-white text-lg font-bold text-white shadow-lg transition hover:scale-125 ${
+                report.status === "Missing"
+                  ? "bg-red-600"
+                  : "bg-green-600"
+              }`}
             >
-              {report.status === "Missing" ? "🐕" : "🐶"}
+              {report.status === "Missing" ? "🐕" : "🐾"}
             </button>
           </Marker>
         ))}
@@ -100,6 +109,20 @@ export default function ReportMap({
             closeOnClick={false}
           >
             <div className="min-w-[200px] p-2 text-[#003d35]">
+              <div className="mb-2">
+                <span
+                  className={`inline-block rounded-full px-2 py-1 text-xs font-bold ${
+                    selectedReport.status === "Missing"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {selectedReport.status === "Missing"
+                    ? "Missing"
+                    : "Found"}
+                </span>
+              </div>
+
               <h2 className="text-lg font-bold">
                 {selectedReport.name}
               </h2>

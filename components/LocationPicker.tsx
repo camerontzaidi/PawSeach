@@ -23,10 +23,6 @@ type MapboxFeature = {
   id?: string;
   place_type?: string[];
   text?: string;
-  place_name?: string;
-  properties?: {
-    short_code?: string;
-  };
   context?: {
     id?: string;
     text?: string;
@@ -44,17 +40,36 @@ export default function LocationPicker({
   cityFieldName,
   zipFieldName,
 }: LocationPickerProps) {
-  const [latitude, setLatitude] =
-    useState(initialLatitude);
+  const [latitude, setLatitude] = useState(initialLatitude);
+  const [longitude, setLongitude] = useState(initialLongitude);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedZip, setSelectedZip] = useState("");
 
-  const [longitude, setLongitude] =
-    useState(initialLongitude);
+  function updateInputValue(fieldName: string, value: string) {
+    const selector = 'input[name="' + fieldName + '"]';
 
-  const [isLoadingLocation, setIsLoadingLocation] =
-    useState(false);
+    const input =
+      document.querySelector<HTMLInputElement>(selector);
 
-  const [selectedLocation, setSelectedLocation] =
-    useState("");
+    if (!input) {
+      return;
+    }
+
+    input.value = value;
+
+    input.dispatchEvent(
+      new Event("input", {
+        bubbles: true,
+      }),
+    );
+
+    input.dispatchEvent(
+      new Event("change", {
+        bubbles: true,
+      }),
+    );
+  }
 
   async function updateLocationFields(
     lat: number,
@@ -73,9 +88,16 @@ export default function LocationPicker({
     setIsLoadingLocation(true);
 
     try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&types=address,place,locality,postcode,region`,
-      );
+      const url =
+        "https://api.mapbox.com/geocoding/v5/mapbox.places/" +
+        lng +
+        "," +
+        lat +
+        ".json?access_token=" +
+        token +
+        "&types=address,place,locality,postcode,region";
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(
@@ -90,12 +112,9 @@ export default function LocationPicker({
 
       if (features.length === 0) {
         setSelectedLocation("");
+        setSelectedZip("");
         return;
       }
-
-      let city = "";
-      let state = "";
-      let zip = "";
 
       const placeFeature = features.find((feature) =>
         feature.place_type?.includes("place"),
@@ -113,53 +132,64 @@ export default function LocationPicker({
         feature.place_type?.includes("region"),
       );
 
-      city =
+      const city =
         placeFeature?.text ??
         localityFeature?.text ??
         "";
 
-      state =
+      const state =
         regionFeature?.text ??
         "";
 
-      zip =
+      let zip =
         postcodeFeature?.text ??
         "";
 
       if (!zip) {
-        const postcodeContext =
-          features.find((feature) =>
-            feature.context?.some((item) =>
+        for (const feature of features) {
+          const postcodeContext =
+            feature.context?.find((item) =>
               item.id?.startsWith("postcode."),
-            ),
-          );
+            );
 
-        const postcodeFromContext =
-          postcodeContext?.context?.find((item) =>
-            item.id?.startsWith("postcode."),
-          );
-
-        zip =
-          postcodeFromContext?.text ??
-          "";
+          if (postcodeContext?.text) {
+            zip = postcodeContext.text;
+            break;
+          }
+        }
       }
 
-      const location =
+      const cityState =
         city && state
-          ? `${city}, ${state}`
+          ? city + ", " + state
           : city || state;
 
-      setSelectedLocation(location);
+      setSelectedLocation(cityState);
+      setSelectedZip(zip);
 
-      updateInputValue(
-        locationFieldName,
-        location,
-      );
+      /*
+       * Missing-pet report:
+       * locationDescription = City, State
+       * zip = ZIP
+       */
+
+      if (locationFieldName) {
+        updateInputValue(
+          locationFieldName,
+          cityState,
+        );
+      }
+
+      /*
+       * Found-pet report:
+       * city = City, State
+       * zip = ZIP
+       */
 
       if (cityFieldName) {
         updateInputValue(
           cityFieldName,
-          city,
+          cityState,
         );
       }
 
@@ -176,6 +206,7 @@ export default function LocationPicker({
       );
 
       setSelectedLocation("");
+      setSelectedZip("");
     } finally {
       setIsLoadingLocation(false);
     }
@@ -266,20 +297,9 @@ export default function LocationPicker({
       ) : selectedLocation ? (
         <p className="mt-1 text-sm font-semibold text-[#fbb12c]">
           📍 {selectedLocation}
-          {zipFieldName && (
-            <>
-              {" "}
-              {document.querySelector<HTMLInputElement>(
-                `input[name="${zipFieldName}"]`,
-              )?.value
-                ? `• ${
-                    document.querySelector<HTMLInputElement>(
-                      `input[name="${zipFieldName}"]`,
-                    )?.value
-                  }`
-                : ""}
-            </>
-          )}
+          {selectedZip
+            ? " • " + selectedZip
+            : ""}
         </p>
       ) : (
         <p className="mt-1 text-sm text-[#b7d5ce]">

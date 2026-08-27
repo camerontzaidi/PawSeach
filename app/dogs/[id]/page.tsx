@@ -1,9 +1,11 @@
 import Link from "next/link";
+import ReportManagement from "@/components/ReportManagement";
 
 export default function DogReportPage() {
   // Temporary fake data
   // Later we will replace this with Supabase data
   const dog = {
+    id: "test",
     name: "Max",
     breed: "Golden Retriever",
     description:
@@ -20,7 +22,6 @@ export default function DogReportPage() {
   return (
     <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
       <div className="mx-auto max-w-5xl">
-
         {/* Back Link */}
         <Link
           href="/dogs"
@@ -46,21 +47,16 @@ export default function DogReportPage() {
 
         {/* Main Report Card */}
         <section className="mt-8 overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f] shadow-lg">
-
           {/* Photo */}
           <div className="flex h-64 items-center justify-center bg-[#003d35] text-8xl sm:h-96">
             🐕
           </div>
 
           <div className="p-5 sm:p-8">
-
             {/* Name + Status */}
             <div className="flex flex-col gap-4 border-b border-[#1b5b51] pb-6 sm:flex-row sm:items-start sm:justify-between">
-
               <div>
-                <h2 className="text-3xl font-bold">
-                  {dog.name}
-                </h2>
+                <h2 className="text-3xl font-bold">{dog.name}</h2>
 
                 <p className="mt-1 text-lg text-[#b7d5ce]">
                   {dog.breed}
@@ -70,14 +66,11 @@ export default function DogReportPage() {
               <span className="w-fit rounded-full bg-[#fbb12c] px-4 py-2 text-sm font-bold text-[#003d35]">
                 {dog.status}
               </span>
-
             </div>
 
             {/* Dog Information */}
             <section className="mt-8">
-              <h3 className="text-2xl font-bold">
-                Dog Information
-              </h3>
+              <h3 className="text-2xl font-bold">Dog Information</h3>
 
               <p className="mt-3 leading-relaxed text-[#c3ded8]">
                 {dog.description}
@@ -86,13 +79,11 @@ export default function DogReportPage() {
 
             {/* Last Seen Information */}
             <section className="mt-8 rounded-xl border border-[#1b5b51] bg-[#003d35] p-5 sm:p-6">
-
               <h3 className="text-xl font-bold">
                 Last Seen Information
               </h3>
 
               <div className="mt-5 grid gap-5 sm:grid-cols-2">
-
                 <div>
                   <p className="text-sm font-semibold text-[#9bbab3]">
                     Date
@@ -122,27 +113,26 @@ export default function DogReportPage() {
                     {dog.latitude}, {dog.longitude}
                   </p>
                 </div>
-
               </div>
-
             </section>
 
             {/* Circumstances */}
             <section className="mt-6 rounded-xl border border-[#1b5b51] p-5 sm:p-6">
-
-              <h3 className="text-xl font-bold">
-                What Happened?
-              </h3>
+              <h3 className="text-xl font-bold">What Happened?</h3>
 
               <p className="mt-3 leading-relaxed text-[#c3ded8]">
                 {dog.circumstances}
               </p>
-
             </section>
+
+            {/* Report Management */}
+            <ReportManagement
+              reportId={dog.id}
+              status={dog.status}
+            />
 
             {/* Share Report */}
             <section className="mt-6 rounded-xl border border-[#1b5b51] p-5 sm:p-6">
-
               <h3 className="text-xl font-bold">
                 Share This Report
               </h3>
@@ -158,12 +148,10 @@ export default function DogReportPage() {
               >
                 Copy Report Link
               </button>
-
             </section>
 
             {/* Contact Owner */}
             <section className="mt-6 rounded-xl border border-[#1b5b51] bg-[#003d35] p-5 sm:p-6">
-
               <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
                 Have You Found Max?
               </span>
@@ -178,30 +166,20 @@ export default function DogReportPage() {
               </p>
 
               <ul className="mt-5 space-y-3 text-sm text-[#b7d5ce]">
+                <li>✓ You can only send one message request</li>
 
-                <li>
-                  ✓ You can only send one message request
-                </li>
+                <li>✓ Your contact information stays private</li>
 
-                <li>
-                  ✓ Your contact information stays private
-                </li>
-
-                <li>
-                  ✓ The owner must accept before chatting
-                </li>
-
+                <li>✓ The owner must accept before chatting</li>
               </ul>
 
               <Link
-                href="/dogs/test/contact"
+                href={`/dogs/${dog.id}/contact`}
                 className="mt-6 inline-block w-full rounded-md bg-[#078c78] px-6 py-3 text-center font-bold text-white transition hover:bg-[#067966] sm:w-auto"
               >
                 Contact Owner
               </Link>
-
             </section>
-
           </div>
         </section>
 
@@ -213,7 +191,6 @@ export default function DogReportPage() {
           - No dog report found.
           - Unable to load report.
         */}
-
       </div>
     </main>
   );
