@@ -212,34 +212,6 @@ export default function LocationPicker({
     }
   }
 
-  function updateInputValue(
-    fieldName: string,
-    value: string,
-  ) {
-    const input =
-      document.querySelector<HTMLInputElement>(
-        `input[name="${fieldName}"]`,
-      );
-
-    if (!input) {
-      return;
-    }
-
-    input.value = value;
-
-    input.dispatchEvent(
-      new Event("input", {
-        bubbles: true,
-      }),
-    );
-
-    input.dispatchEvent(
-      new Event("change", {
-        bubbles: true,
-      }),
-    );
-  }
-
   function handleMapClick(event: MapMouseEvent) {
     const { lng, lat } = event.lngLat;
 

@@ -139,6 +139,8 @@ export async function submitMissingDogReport(
     revalidatePath("/dogs");
     revalidatePath("/report");
     revalidatePath("/map");
+    revalidatePath("/dashboard");
+    revalidatePath("/me");
 
     return {
       success: true,

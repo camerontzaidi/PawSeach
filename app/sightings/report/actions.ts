@@ -184,6 +184,8 @@ export async function submitFoundAnimalReport(
     revalidatePath("/map");
     revalidatePath(`/sightings/${reportId}`);
     revalidatePath("/");
+    revalidatePath("/dashboard");
+    revalidatePath("/me");
 
     return {
       success: true,
