@@ -1,36 +1,155 @@
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 
-const profile = {
-  name: "Ravi",
-  email: "ravi@example.com",
-  memberSince: "July 2026",
-  city: "Fremont",
-  zip: "94538",
-};
+export default async function ProfilePage() {
+  const supabase = await createClient();
 
-const stats = {
-  reports: 5,
-  sightings: 8,
-  reunited: 3,
-  active: 2,
-};
+  // --------------------------------------------------
+  // GET LOGGED-IN USER
+  // --------------------------------------------------
 
-export default function ProfilePage() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // --------------------------------------------------
+  // REAL USER INFORMATION
+  // --------------------------------------------------
+
+  const name =
+    user.user_metadata?.name ||
+    user.user_metadata?.full_name ||
+    user.user_metadata?.display_name ||
+    user.email?.split("@")[0] ||
+    "User";
+
+  const email = user.email || "Email unavailable";
+
+  const memberSince = new Date(user.created_at).toLocaleDateString(
+    "en-US",
+    {
+      month: "long",
+      year: "numeric",
+    },
+  );
+
+  // --------------------------------------------------
+  // GET USER'S DOG REPORTS
+  // --------------------------------------------------
+
+  const { data: dogsData, error: dogsError } = await supabase
+    .from("dogs")
+    .select("id, status")
+    .eq("owner_id", user.id);
+
+  if (dogsError) {
+    console.error("PROFILE - Error loading dogs:", dogsError);
+  }
+
+  const dogs = dogsData ?? [];
+
+  // --------------------------------------------------
+  // REAL REPORT COUNTS
+  // --------------------------------------------------
+
+  const missingReports = dogs.filter(
+    (dog) => dog.status?.toLowerCase() === "missing",
+  ).length;
+
+  const reunitedReports = dogs.filter(
+    (dog) => dog.status?.toLowerCase() === "reunited",
+  ).length;
+
+  const closedReports = dogs.filter(
+    (dog) => dog.status?.toLowerCase() === "closed",
+  ).length;
+
+  // --------------------------------------------------
+  // GET USER'S FOUND REPORTS
+  //
+  // reports.user_id -> user.id
+  // found_reports.report_id -> reports.id
+  // --------------------------------------------------
+
+  const { data: reportsData, error: reportsError } = await supabase
+    .from("reports")
+    .select("id")
+    .eq("user_id", user.id);
+
+  if (reportsError) {
+    console.error(
+      "PROFILE - Error loading reports:",
+      reportsError,
+    );
+  }
+
+  const reportIds = (reportsData ?? []).map(
+    (report) => report.id,
+  );
+
+  let foundReports = 0;
+
+  if (reportIds.length > 0) {
+    const { count, error: foundError } = await supabase
+      .from("found_reports")
+      .select("id", {
+        count: "exact",
+        head: true,
+      })
+      .in("report_id", reportIds);
+
+    if (foundError) {
+      console.error(
+        "PROFILE - Error loading found reports:",
+        foundError,
+      );
+    } else {
+      foundReports = count ?? 0;
+    }
+  }
+
+  // --------------------------------------------------
+  // TEMPORARY LOCATION
+  // --------------------------------------------------
+
+  const city = "Fremont";
+  const zip = "94538";
+
+  // --------------------------------------------------
+  // PAGE
+  // --------------------------------------------------
+
   return (
     <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
       <div className="mx-auto max-w-6xl">
+
         {/* PROFILE HEADER */}
+
         <section className="overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f]">
+
           <div className="h-32 bg-[#078c78]" />
 
           <div className="px-6 pb-7 sm:px-8">
+
             <div className="-mt-14 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+
+                {/* AVATAR */}
+
                 <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-[#06483f] bg-[#fbb12c] text-5xl font-bold text-[#003d35]">
-                  {profile.name.charAt(0).toUpperCase()}
+                  {name.charAt(0).toUpperCase()}
                 </div>
 
+                {/* USER INFO */}
+
                 <div>
+
                   <p className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
                     My Account
                   </p>
@@ -40,13 +159,15 @@ export default function ProfilePage() {
                   </h1>
 
                   <p className="mt-1 text-[#b7d5ce]">
-                    {profile.name}
+                    {name}
                   </p>
 
                   <p className="mt-1 text-sm text-[#9bbab3]">
-                    Member since {profile.memberSince}
+                    Member since {memberSince}
                   </p>
+
                 </div>
+
               </div>
 
               <Link
@@ -55,83 +176,123 @@ export default function ProfilePage() {
               >
                 Edit Information
               </Link>
+
             </div>
+
           </div>
+
         </section>
 
-        {/* PAWSEARCH IMPACT */}
+        {/* REPORT ACTIVITY */}
+
         <section className="mt-8">
+
           <div>
+
             <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-              Your PawSearch Impact
+              Your PawSearch Activity
             </span>
 
             <h2 className="mt-2 text-3xl font-bold">
-              Making a difference
+              Your Reports
             </h2>
 
             <p className="mt-2 text-[#b7d5ce]">
-              Your activity helps connect missing pets with their families.
+              A summary of your missing-pet and found-animal reports.
             </p>
+
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+            {/* MISSING REPORTS */}
+
             <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
-              <div className="text-3xl">📋</div>
+
+              <div className="text-3xl">
+                🐕
+              </div>
 
               <p className="mt-4 text-3xl font-bold">
-                {stats.reports}
+                {missingReports}
               </p>
 
               <p className="mt-1 text-[#b7d5ce]">
-                Reports submitted
+                Missing reports
               </p>
+
             </div>
 
+            {/* FOUND REPORTS */}
+
             <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
-              <div className="text-3xl">📍</div>
+
+              <div className="text-3xl">
+                🐾
+              </div>
 
               <p className="mt-4 text-3xl font-bold">
-                {stats.sightings}
+                {foundReports}
               </p>
 
               <p className="mt-1 text-[#b7d5ce]">
-                Sightings reported
+                Found reports
               </p>
+
             </div>
 
+            {/* REUNITED */}
+
             <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
-              <div className="text-3xl">🎉</div>
+
+              <div className="text-3xl">
+                🎉
+              </div>
 
               <p className="mt-4 text-3xl font-bold">
-                {stats.reunited}
+                {reunitedReports}
               </p>
 
               <p className="mt-1 text-[#b7d5ce]">
                 Pets reunited
               </p>
+
             </div>
 
+            {/* CLOSED */}
+
             <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
-              <div className="text-3xl">🔎</div>
+
+              <div className="text-3xl">
+                📁
+              </div>
 
               <p className="mt-4 text-3xl font-bold">
-                {stats.active}
+                {closedReports}
               </p>
 
               <p className="mt-1 text-[#b7d5ce]">
-                Active reports
+                Closed reports
               </p>
+
             </div>
+
           </div>
+
         </section>
 
-        {/* PERSONAL INFORMATION AND NOTIFICATIONS */}
+        {/* PERSONAL INFORMATION + NOTIFICATIONS */}
+
         <div className="mt-8 grid gap-8 lg:grid-cols-2">
+
           {/* PERSONAL INFORMATION */}
+
           <section className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+
             <div className="flex items-start justify-between gap-4">
+
               <div>
+
                 <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
                   Information
                 </span>
@@ -143,6 +304,7 @@ export default function ProfilePage() {
                 <p className="mt-1 text-[#b7d5ce]">
                   Your basic account information.
                 </p>
+
               </div>
 
               <Link
@@ -151,43 +313,61 @@ export default function ProfilePage() {
               >
                 Edit
               </Link>
+
             </div>
 
             <div className="mt-6 space-y-4">
+
+              {/* NAME */}
+
               <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
+
                 <p className="text-sm text-[#9bbab3]">
                   Name
                 </p>
 
                 <p className="mt-1 font-semibold">
-                  {profile.name}
+                  {name}
                 </p>
+
               </div>
 
+              {/* EMAIL */}
+
               <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
+
                 <p className="text-sm text-[#9bbab3]">
                   Email
                 </p>
 
                 <p className="mt-1 font-semibold">
-                  {profile.email}
+                  {email}
                 </p>
+
               </div>
 
+              {/* LOCATION */}
+
               <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
+
                 <p className="text-sm text-[#9bbab3]">
                   Saved Location
                 </p>
 
                 <p className="mt-1 font-semibold">
-                  {profile.city}, {profile.zip}
+                  {city}, {zip}
                 </p>
+
               </div>
+
             </div>
+
           </section>
 
           {/* NOTIFICATIONS */}
+
           <section className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+
             <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
               Preferences
             </span>
@@ -201,8 +381,13 @@ export default function ProfilePage() {
             </p>
 
             <div className="mt-6 space-y-4">
+
+              {/* NEARBY SIGHTINGS */}
+
               <label className="flex items-center justify-between gap-4 rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
+
                 <div>
+
                   <p className="font-semibold">
                     Nearby sightings
                   </p>
@@ -210,6 +395,7 @@ export default function ProfilePage() {
                   <p className="mt-1 text-sm text-[#9bbab3]">
                     Get notified about sightings near your reports.
                   </p>
+
                 </div>
 
                 <input
@@ -217,10 +403,15 @@ export default function ProfilePage() {
                   defaultChecked
                   className="h-5 w-5 accent-[#fbb12c]"
                 />
+
               </label>
 
+              {/* CONTACT REQUESTS */}
+
               <label className="flex items-center justify-between gap-4 rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
+
                 <div>
+
                   <p className="font-semibold">
                     Contact requests
                   </p>
@@ -228,6 +419,7 @@ export default function ProfilePage() {
                   <p className="mt-1 text-sm text-[#9bbab3]">
                     Know when someone wants to contact you.
                   </p>
+
                 </div>
 
                 <input
@@ -235,10 +427,15 @@ export default function ProfilePage() {
                   defaultChecked
                   className="h-5 w-5 accent-[#fbb12c]"
                 />
+
               </label>
 
+              {/* PAWSEARCH UPDATES */}
+
               <label className="flex items-center justify-between gap-4 rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
+
                 <div>
+
                   <p className="font-semibold">
                     PawSearch updates
                   </p>
@@ -246,6 +443,7 @@ export default function ProfilePage() {
                   <p className="mt-1 text-sm text-[#9bbab3]">
                     Important product and community updates.
                   </p>
+
                 </div>
 
                 <input
@@ -253,13 +451,19 @@ export default function ProfilePage() {
                   defaultChecked
                   className="h-5 w-5 accent-[#fbb12c]"
                 />
+
               </label>
+
             </div>
+
           </section>
+
         </div>
 
         {/* PRIVACY & SAFETY */}
+
         <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+
           <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
             Safety
           </span>
@@ -273,8 +477,12 @@ export default function ProfilePage() {
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
+
             <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5">
-              <div className="text-2xl">🔒</div>
+
+              <div className="text-2xl">
+                🔒
+              </div>
 
               <h3 className="mt-3 font-bold">
                 Private Contact Information
@@ -284,10 +492,14 @@ export default function ProfilePage() {
                 Your personal contact information should remain private when
                 communicating with other PawSearch users.
               </p>
+
             </div>
 
             <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5">
-              <div className="text-2xl">⚠️</div>
+
+              <div className="text-2xl">
+                ⚠️
+              </div>
 
               <h3 className="mt-3 font-bold">
                 Stay Alert for Scams
@@ -297,12 +509,17 @@ export default function ProfilePage() {
                 Never send money or sensitive information based only on an
                 unverified claim that someone found your pet.
               </p>
+
             </div>
+
           </div>
+
         </section>
 
         {/* ACCOUNT SETTINGS */}
+
         <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+
           <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
             Account
           </span>
@@ -316,11 +533,15 @@ export default function ProfilePage() {
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
+
             <Link
               href="/me"
               className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5 transition hover:border-[#fbb12c]"
             >
-              <div className="text-2xl">⚙️</div>
+
+              <div className="text-2xl">
+                ⚙️
+              </div>
 
               <h3 className="mt-3 font-bold">
                 Account Preferences
@@ -329,13 +550,17 @@ export default function ProfilePage() {
               <p className="mt-1 text-sm text-[#b7d5ce]">
                 Manage your saved location and account preferences.
               </p>
+
             </Link>
 
             <Link
-              href="/me"
+              href="/dashboard"
               className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5 transition hover:border-[#fbb12c]"
             >
-              <div className="text-2xl">📋</div>
+
+              <div className="text-2xl">
+                📋
+              </div>
 
               <h3 className="mt-3 font-bold">
                 My Reports & Activity
@@ -344,33 +569,46 @@ export default function ProfilePage() {
               <p className="mt-1 text-sm text-[#b7d5ce]">
                 View your reports, saved reports, and recent activity.
               </p>
+
             </Link>
+
           </div>
 
           <div className="mt-6 border-t border-[#1b5b51] pt-6">
-            <button
-              type="button"
-              className="rounded-md border border-red-400/40 px-5 py-2.5 font-semibold text-red-300 transition hover:bg-red-500/10"
-            >
-              Sign Out
-            </button>
+
+            <form action="/auth/signout" method="post">
+
+              <button
+                type="submit"
+                className="rounded-md border border-red-400/40 px-5 py-2.5 font-semibold text-red-300 transition hover:bg-red-500/10"
+              >
+                Sign Out
+              </button>
+
+            </form>
 
             <p className="mt-3 text-xs text-[#9bbab3]">
               Account deletion and authentication settings can be connected to
               Supabase later.
             </p>
+
           </div>
+
         </section>
 
         {/* FOOTER */}
+
         <div className="mt-10 text-center">
+
           <Link
             href="/"
             className="font-semibold text-[#fbb12c] hover:text-[#ffc34d]"
           >
             ← Back to PawSearch
           </Link>
+
         </div>
+
       </div>
     </main>
   );

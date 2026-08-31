@@ -33,6 +33,12 @@ export default function ReportPage() {
 
       if (submissionResult.success) {
         form.reset();
+
+        // Bring the user back to the success message
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
       }
     });
   }
@@ -40,6 +46,8 @@ export default function ReportPage() {
   return (
     <main className="min-h-screen bg-[#003d35] px-6 py-10 text-white">
       <div className="mx-auto max-w-3xl">
+
+        {/* HEADER */}
         <div className="mb-10 text-center">
           <h1 className="text-4xl font-bold">
             Report a Missing Pet 🐾
@@ -50,48 +58,53 @@ export default function ReportPage() {
           </p>
         </div>
 
+        {/* SUCCESS / ERROR MESSAGE */}
+        {result && (
+          <div
+            role={result.success ? "status" : "alert"}
+            className={`mb-6 rounded-lg border p-4 ${
+              result.success
+                ? "border-emerald-400 bg-emerald-900/30"
+                : "border-red-400 bg-red-900/30"
+            }`}
+          >
+            <p className="font-bold">
+              {result.message}
+            </p>
+
+            {result.fieldErrors && (
+              <ul className="mt-2 list-disc pl-5">
+                {Object.entries(
+                  result.fieldErrors,
+                ).flatMap(
+                  ([field, messages]) =>
+                    messages.map((message) => (
+                      <li
+                        key={`${field}-${message}`}
+                      >
+                        {message}
+                      </li>
+                    )),
+                )}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {/* FORM */}
         <form
           onSubmit={handleSubmit}
           className="space-y-8"
         >
-          {result && (
-            <div
-              role="status"
-              className={`rounded-lg border p-4 ${
-                result.success
-                  ? "border-emerald-400 bg-emerald-900/30"
-                  : "border-red-400 bg-red-900/30"
-              }`}
-            >
-              <p className="font-bold">
-                {result.message}
-              </p>
 
-              {result.fieldErrors && (
-                <ul className="mt-2 list-disc pl-5">
-                  {Object.entries(
-                    result.fieldErrors,
-                  ).flatMap(
-                    ([field, messages]) =>
-                      messages.map((message) => (
-                        <li
-                          key={`${field}-${message}`}
-                        >
-                          {message}
-                        </li>
-                      )),
-                  )}
-                </ul>
-              )}
-            </div>
-          )}
-
+          {/* DOG INFORMATION */}
           <section className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6">
             <h2 className="mb-5 text-2xl font-bold">
               Dog Information
             </h2>
 
             <div className="grid gap-4 md:grid-cols-2">
+
               <input
                 name="dogName"
                 placeholder="Dog Name *"
@@ -126,9 +139,11 @@ export default function ReportPage() {
                 <option value="unknown">
                   Sex unknown
                 </option>
+
                 <option value="male">
                   Male
                 </option>
+
                 <option value="female">
                   Female
                 </option>
@@ -142,12 +157,15 @@ export default function ReportPage() {
                 <option value="unknown">
                   Size unknown
                 </option>
+
                 <option value="small">
                   Small
                 </option>
+
                 <option value="medium">
                   Medium
                 </option>
+
                 <option value="large">
                   Large
                 </option>
@@ -167,6 +185,7 @@ export default function ReportPage() {
                   name="microchipped"
                   type="checkbox"
                 />
+
                 Microchipped
               </label>
             </div>
@@ -178,12 +197,14 @@ export default function ReportPage() {
             />
           </section>
 
+          {/* LAST SEEN INFORMATION */}
           <section className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6">
             <h2 className="mb-5 text-2xl font-bold">
               Last Seen Information
             </h2>
 
             <div className="grid gap-4 md:grid-cols-2">
+
               <input
                 name="lastSeenAt"
                 type="datetime-local"
@@ -205,6 +226,7 @@ export default function ReportPage() {
                   name="timeIsApproximate"
                   type="checkbox"
                 />
+
                 Last-seen time is approximate
               </label>
             </div>
@@ -216,17 +238,20 @@ export default function ReportPage() {
             />
           </section>
 
+          {/* REWARD */}
           <section className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6">
             <h2 className="mb-5 text-2xl font-bold">
               Reward
             </h2>
 
             <div className="grid gap-4 md:grid-cols-2">
+
               <label className="flex items-center gap-3 rounded-md border border-[#9bd8c9] p-3">
                 <input
                   name="rewardOffered"
                   type="checkbox"
                 />
+
                 Reward offered
               </label>
 
@@ -241,6 +266,7 @@ export default function ReportPage() {
             </div>
           </section>
 
+          {/* PHOTOS */}
           <section className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6">
             <h2 className="mb-5 text-2xl font-bold">
               Photos
@@ -261,6 +287,7 @@ export default function ReportPage() {
             </p>
           </section>
 
+          {/* SUBMIT */}
           <button
             type="submit"
             disabled={isPending}
@@ -270,6 +297,7 @@ export default function ReportPage() {
               ? "Submitting…"
               : "Submit Missing Dog Report"}
           </button>
+
         </form>
       </div>
     </main>
