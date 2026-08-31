@@ -1,153 +1,486 @@
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import ReportManagement from "@/components/ReportManagement";
-import { getCurrentUserDashboard } from "@/lib/reports/data";
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
+type Dog = {
+  id: string;
+  owner_id: string;
+  dog_name: string;
+  breed: string | null;
+  description: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  status: string;
+  created_at: string;
+  last_seen_at: string | null;
+  location_description: string | null;
+};
 
-function prettyStatus(status: string) {
-  return status.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
+type DogPhoto = {
+  id: string;
+  dog_id: string;
+  storage_path: string;
+  is_primary: boolean;
+};
 
 export default async function DashboardPage() {
-  const dashboard = await getCurrentUserDashboard();
-  if (!dashboard) redirect("/login");
+  const supabase = await createClient();
 
-  const { missing, found, missingPhotos, foundPhotos } = dashboard;
+  // --------------------------------------------------
+  // GET LOGGED-IN USER
+  // --------------------------------------------------
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // --------------------------------------------------
+  // GET USER'S DOG REPORTS
+  // --------------------------------------------------
+
+  const { data: dogsData, error: dogsError } = await supabase
+    .from("dogs")
+    .select(
+      `
+        id,
+        owner_id,
+        dog_name,
+        breed,
+        description,
+        latitude,
+        longitude,
+        status,
+        created_at,
+        last_seen_at,
+        location_description
+      `,
+    )
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (dogsError) {
+    console.error("Error loading dog reports:", dogsError);
+  }
+
+  const dogs = (dogsData ?? []) as Dog[];
+
+  // --------------------------------------------------
+  // SPLIT DOG REPORTS BY STATUS
+  // --------------------------------------------------
+
+  const missingDogs = dogs.filter(
+    (dog) => dog.status.toLowerCase() === "missing",
+  );
+
+  const reunitedDogs = dogs.filter(
+    (dog) => dog.status.toLowerCase() === "reunited",
+  );
+
+  const closedDogs = dogs.filter(
+    (dog) => dog.status.toLowerCase() === "closed",
+  );
+
+  // --------------------------------------------------
+  // GET DOG PHOTOS
+  // --------------------------------------------------
+
+  let dogPhotos: DogPhoto[] = [];
+
+  if (dogs.length > 0) {
+    const dogIds = dogs.map((dog) => dog.id);
+
+    const { data: photosData, error: photosError } =
+      await supabase
+        .from("dog_photos")
+        .select(
+          `
+            id,
+            dog_id,
+            storage_path,
+            is_primary
+          `,
+        )
+        .in("dog_id", dogIds)
+        .order("is_primary", { ascending: false });
+
+    if (photosError) {
+      console.error(
+        "Error loading dog photos:",
+        photosError,
+      );
+    }
+
+    dogPhotos = (photosData ?? []) as DogPhoto[];
+  }
+
+  // --------------------------------------------------
+  // GET PRIMARY DOG PHOTO
+  // --------------------------------------------------
+
+  function getDogPhoto(dogId: string) {
+    const photo = dogPhotos.find(
+      (item) =>
+        item.dog_id === dogId &&
+        item.is_primary,
+    );
+
+    if (!photo) {
+      return null;
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage
+      .from("dog-photos")
+      .getPublicUrl(photo.storage_path);
+
+    return publicUrl;
+  }
+
+  // --------------------------------------------------
+  // FORMAT STATUS
+  // --------------------------------------------------
+
+  function formatStatus(status: string) {
+    return status
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, (letter) =>
+        letter.toUpperCase(),
+      );
+  }
+
+  // --------------------------------------------------
+  // FORMAT DATE
+  // --------------------------------------------------
+
+  function formatDate(date: string | null) {
+    if (!date) {
+      return "Date unavailable";
+    }
+
+    return new Date(date).toLocaleDateString(
+      "en-US",
+      {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      },
+    );
+  }
+
+  // --------------------------------------------------
+  // DOG CARD
+  // --------------------------------------------------
+
+  function DogCard({
+    dog,
+    found,
+  }: {
+    dog: Dog;
+    found?: boolean;
+  }) {
+    const photo = getDogPhoto(dog.id);
+
+    return (
+      <article
+        className="overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f]"
+      >
+        {/* PHOTO */}
+
+        <div className="flex h-48 items-center justify-center bg-[#00342e]">
+          {photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photo}
+              alt={dog.dog_name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="text-7xl">
+              🐕
+            </span>
+          )}
+        </div>
+
+        <div className="p-6">
+
+          {/* NAME + STATUS */}
+
+          <div className="flex items-start justify-between gap-4">
+
+            <div>
+              <h3 className="text-2xl font-bold">
+                {dog.dog_name}
+              </h3>
+
+              <p className="mt-1 text-[#b7d5ce]">
+                {dog.breed || "Unknown breed"}
+              </p>
+            </div>
+
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-bold ${
+                found
+                  ? "bg-[#078c78] text-white"
+                  : "bg-[#fbb12c] text-[#003d35]"
+              }`}
+            >
+              {found
+                ? "Found"
+                : formatStatus(dog.status)}
+            </span>
+
+          </div>
+
+          {/* LOCATION / DATE */}
+
+          <div className="mt-5 space-y-2 text-sm text-[#c3ded8]">
+
+            {dog.location_description && (
+              <p>
+                📍 {dog.location_description}
+              </p>
+            )}
+
+            {dog.last_seen_at && (
+              <p>
+                📅 {formatDate(dog.last_seen_at)}
+              </p>
+            )}
+
+          </div>
+
+          {/* ACTIONS */}
+
+          <div className="mt-6 flex flex-wrap gap-3">
+
+            <Link
+              href={`/dogs/${dog.id}`}
+              className="rounded-md border border-[#1b5b51] px-4 py-2 font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
+            >
+              View / Change Status
+            </Link>
+
+            <Link
+              href={`/dogs/${dog.id}/edit`}
+              className="rounded-md bg-[#078c78] px-4 py-2 font-bold text-white transition hover:bg-[#067966]"
+            >
+              Edit Info
+            </Link>
+
+          </div>
+
+        </div>
+      </article>
+    );
+  }
+
+  // --------------------------------------------------
+  // PAGE
+  // --------------------------------------------------
 
   return (
     <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
+
       <div className="mx-auto max-w-6xl">
-        <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-          My Reports
-        </span>
-        <h1 className="mt-2 text-4xl font-bold sm:text-5xl">Manage Your Reports</h1>
-        <p className="mt-3 text-lg text-[#b7d5ce]">
-          These reports are loaded from Supabase for your signed-in account.
-        </p>
+
+        {/* HEADER */}
+
+        <div>
+          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+            My Reports
+          </span>
+
+          <h1 className="mt-2 text-4xl font-bold sm:text-5xl">
+            Manage Your Reports
+          </h1>
+
+          <p className="mt-3 text-lg text-[#b7d5ce]">
+            View and manage your missing pet reports.
+          </p>
+        </div>
+
+        {/* ========================================== */}
+        {/* MISSING PET REPORTS */}
+        {/* ========================================== */}
 
         <section className="mt-12">
+
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+
             <div>
-              <h2 className="text-3xl font-bold">My Missing Pet Reports</h2>
-              <p className="mt-1 text-[#b7d5ce]">{missing.length} {missing.length === 1 ? "report" : "reports"}</p>
+              <h2 className="text-3xl font-bold">
+                My Missing Pet Reports
+              </h2>
+
+              <p className="mt-1 text-[#b7d5ce]">
+                {missingDogs.length}{" "}
+                {missingDogs.length === 1
+                  ? "report"
+                  : "reports"}
+              </p>
             </div>
-            <Link href="/report" className="font-bold text-[#fbb12c] hover:text-[#ffc34d]">
+
+            <Link
+              href="/report"
+              className="font-bold text-[#fbb12c] hover:text-[#ffc34d]"
+            >
               + New Missing Report
             </Link>
+
           </div>
 
-          {missing.length === 0 ? (
+          {missingDogs.length === 0 ? (
+
             <div className="mt-6 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-10 text-center">
-              <div className="text-5xl">🐕</div>
-              <h3 className="mt-4 text-xl font-bold">No missing pet reports</h3>
-              <p className="mt-2 text-[#b7d5ce]">You haven&apos;t created any missing pet reports yet.</p>
-              <Link href="/report" className="mt-6 inline-block rounded-md bg-[#fbb12c] px-6 py-3 font-bold text-[#003d35] hover:bg-[#ffc34d]">
-                Report a Missing Pet
-              </Link>
+
+              <div className="text-5xl">
+                🐕
+              </div>
+
+              <h3 className="mt-4 text-xl font-bold">
+                No missing pet reports
+              </h3>
+
+              <p className="mt-2 text-[#b7d5ce]">
+                You don't have any active missing pet
+                reports.
+              </p>
+
             </div>
+
           ) : (
+
             <div className="mt-6 grid gap-6 md:grid-cols-2">
-              {missing.map((report) => {
-                const photo = missingPhotos.get(report.id);
-                return (
-                  <article key={report.id} className="overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f]">
-                    <div
-                      className="flex h-48 items-center justify-center bg-[#003d35] bg-cover bg-center text-7xl"
-                      style={photo ? { backgroundImage: `url(${photo})` } : undefined}
-                    >
-                      {!photo && "🐕"}
-                    </div>
-                    <div className="p-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="text-2xl font-bold">{report.dog_name}</h3>
-                          <p className="mt-1 text-[#b7d5ce]">{report.breed || "Unknown breed"}</p>
-                        </div>
-                        <span className="rounded-full bg-[#fbb12c] px-3 py-1 text-xs font-bold text-[#003d35]">{prettyStatus(report.status)}</span>
-                      </div>
-                      <div className="mt-5 space-y-2 text-sm text-[#c3ded8]">
-                        <p>📍 {report.location_description || "Location unavailable"}</p>
-                        <p>📅 {formatDate(report.created_at)}</p>
-                      </div>
-                      <div className="mt-6">
-                        <Link href={`/dogs/${report.id}`} className="rounded-md border border-[#1b5b51] px-4 py-2 font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]">
-                          View Report
-                        </Link>
-                      </div>
-                      <ReportManagement reportId={report.id} status={report.status} reportType="missing" />
-                    </div>
-                  </article>
-                );
-              })}
+
+              {missingDogs.map((dog) => (
+                <DogCard
+                  key={dog.id}
+                  dog={dog}
+                />
+              ))}
+
             </div>
+
           )}
+
         </section>
+
+        {/* ========================================== */}
+        {/* FOUND / REUNITED PET REPORTS */}
+        {/* ========================================== */}
 
         <section className="mt-12">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-3xl font-bold">My Found Animal Reports</h2>
-              <p className="mt-1 text-[#b7d5ce]">{found.length} {found.length === 1 ? "report" : "reports"}</p>
-            </div>
-            <Link href="/sightings/report" className="font-bold text-[#fbb12c] hover:text-[#ffc34d]">
-              + New Found Report
-            </Link>
+
+          <div>
+            <h2 className="text-3xl font-bold">
+              My Found Animal Reports
+            </h2>
+
+            <p className="mt-1 text-[#b7d5ce]">
+              {reunitedDogs.length}{" "}
+              {reunitedDogs.length === 1
+                ? "report"
+                : "reports"}
+            </p>
           </div>
 
-          {found.length === 0 ? (
+          {reunitedDogs.length === 0 ? (
+
             <div className="mt-6 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-10 text-center">
-              <div className="text-5xl">🐾</div>
-              <h3 className="mt-4 text-xl font-bold">No found animal reports</h3>
-              <p className="mt-2 text-[#b7d5ce]">You haven&apos;t submitted any found animal reports yet.</p>
-              <Link href="/sightings/report" className="mt-6 inline-block rounded-md bg-[#fbb12c] px-6 py-3 font-bold text-[#003d35] hover:bg-[#ffc34d]">
-                Report a Found Animal
-              </Link>
+
+              <div className="text-5xl">
+                🎉
+              </div>
+
+              <h3 className="mt-4 text-xl font-bold">
+                No found animal reports
+              </h3>
+
+              <p className="mt-2 text-[#b7d5ce]">
+                Pets you mark as reunited will appear here.
+              </p>
+
             </div>
+
           ) : (
+
             <div className="mt-6 grid gap-6 md:grid-cols-2">
-              {found.map((report) => {
-                const photo = foundPhotos.get(report.id);
-                return (
-                  <article key={report.id} className="overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f]">
-                    <div
-                      className="flex h-48 items-center justify-center bg-[#003d35] bg-cover bg-center text-7xl"
-                      style={photo ? { backgroundImage: `url(${photo})` } : undefined}
-                    >
-                      {!photo && "🐾"}
-                    </div>
-                    <div className="p-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="text-2xl font-bold">{report.breed || "Found Animal"}</h3>
-                          <p className="mt-1 text-[#b7d5ce]">{report.color}</p>
-                        </div>
-                        <span className="rounded-full bg-[#078c78] px-3 py-1 text-xs font-bold text-white">{prettyStatus(report.status)}</span>
-                      </div>
-                      <div className="mt-5 space-y-2 text-sm text-[#c3ded8]">
-                        <p>📍 {report.city}, {report.zip_code}</p>
-                        <p>📅 {formatDate(report.found_at)}</p>
-                      </div>
-                      <div className="mt-6">
-                        <Link href={`/sightings/${report.id}`} className="rounded-md border border-[#1b5b51] px-4 py-2 font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]">
-                          View Report
-                        </Link>
-                      </div>
-                      <ReportManagement reportId={report.id} status={report.status} reportType="found" />
-                    </div>
-                  </article>
-                );
-              })}
+
+              {reunitedDogs.map((dog) => (
+                <DogCard
+                  key={dog.id}
+                  dog={dog}
+                  found
+                />
+              ))}
+
             </div>
+
           )}
+
         </section>
+
+        {/* ========================================== */}
+        {/* CLOSED REPORTS */}
+        {/* ========================================== */}
+
+        <section className="mt-12">
+
+          <div>
+            <h2 className="text-3xl font-bold">
+              My Closed Reports
+            </h2>
+
+            <p className="mt-1 text-[#b7d5ce]">
+              {closedDogs.length}{" "}
+              {closedDogs.length === 1
+                ? "report"
+                : "reports"}
+            </p>
+          </div>
+
+          {closedDogs.length === 0 ? (
+
+            <div className="mt-6 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-10 text-center">
+
+              <div className="text-5xl">
+                📁
+              </div>
+
+              <h3 className="mt-4 text-xl font-bold">
+                No closed reports
+              </h3>
+
+              <p className="mt-2 text-[#b7d5ce]">
+                Reports you close will appear here.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+
+              {closedDogs.map((dog) => (
+                <DogCard
+                  key={dog.id}
+                  dog={dog}
+                />
+              ))}
+
+            </div>
+
+          )}
+
+        </section>
+
       </div>
     </main>
   );
 }
+
