@@ -347,7 +347,7 @@ export default async function DashboardPage() {
               </h3>
 
               <p className="mt-2 text-[#b7d5ce]">
-                You don't have any active missing pet
+                You don&apos;t have any active missing pet
                 reports.
               </p>
 

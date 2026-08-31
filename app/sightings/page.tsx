@@ -131,7 +131,7 @@ export default async function SightingsPage({
   // "dogs" table but were marked as reunited.
   // ==================================================
 
-  let reunitedQuery = supabase
+  const reunitedQuery = supabase
     .from("dogs")
     .select(
       `

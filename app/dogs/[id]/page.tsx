@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import ReportManagement from "@/components/ReportManagement";
 import CopyReportLink from "@/components/CopyReportLink";
 
@@ -34,18 +34,6 @@ type DogPhoto = {
   storage_path: string;
   is_primary: boolean;
 };
-
-function formatDate(date: string | null) {
-  if (!date) {
-    return "Date unavailable";
-  }
-
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function formatDateTime(date: string | null) {
   if (!date) {
@@ -520,4 +508,3 @@ export default async function DogReportPage({
     </main>
   );
 }
-

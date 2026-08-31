@@ -8,11 +8,13 @@ import { createClient } from "@/utils/supabase/client";
 type ReportManagementProps = {
   reportId: string;
   status: string;
+  reportType?: "missing" | "found";
 };
 
 export default function ReportManagement({
   reportId,
   status,
+  reportType = "missing",
 }: ReportManagementProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -20,6 +22,7 @@ export default function ReportManagement({
   const [loading, setLoading] = useState(false);
 
   const normalizedStatus = status.toLowerCase();
+  const isFoundReport = reportType === "found";
 
   const isClosed = normalizedStatus === "closed";
   const isFound =
@@ -109,7 +112,7 @@ export default function ReportManagement({
       }
 
       const { error } = await supabase
-        .from("dogs")
+        .from(isFoundReport ? "found_reports" : "dogs")
         .update({
           status: "closed",
         })
@@ -178,7 +181,7 @@ export default function ReportManagement({
         )}
 
         {/* MARK REUNITED */}
-        {!isFound && !isClosed && (
+        {!isFoundReport && !isFound && !isClosed && (
           <button
             type="button"
             onClick={handleMarkReunited}
@@ -210,4 +213,3 @@ export default function ReportManagement({
     </section>
   );
 }
-
