@@ -645,41 +645,6 @@ export default async function DogReportPage({
                 </section>
               )}
 
-            {/* ---------------------------------------- */}
-            {/* REPORT MANAGEMENT */}
-            {/* ---------------------------------------- */}
-
-            {isOwner && (
-              <ReportManagement
-                reportId={
-                  dog.id
-                }
-                status={
-                  dog.status
-                }
-              />
-            )}
-
-            {/* EDIT / BACK */}
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-
-              {isOwner && (
-                <Link
-                  href={`/dogs/${dog.id}/edit`}
-                  className="rounded-md bg-[#078c78] px-6 py-3 text-center font-bold text-white transition hover:bg-[#067966]"
-                >
-                  Edit Report
-                </Link>
-              )}
-
-              <Link
-                href="/dashboard"
-                className="rounded-md border border-[#1b5b51] px-6 py-3 text-center font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
-              >
-                Back to My Reports
-              </Link>
-            </div>
 
             {/* SHARE */}
 

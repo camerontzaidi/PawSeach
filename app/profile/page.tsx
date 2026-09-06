@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { createClient } from "@/utils/supabase/server";
 import UserAvatar from "@/components/UserAvatar";
+import ProfileInformation from "@/components/ProfileInformation";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -19,7 +19,7 @@ export default async function ProfilePage() {
   }
 
   // --------------------------------------------------
-  // REAL USER INFORMATION
+  // USER INFORMATION
   // --------------------------------------------------
 
   const name =
@@ -36,53 +36,84 @@ export default async function ProfilePage() {
     user.user_metadata?.picture ||
     null;
 
-  const memberSince = new Date(user.created_at).toLocaleDateString(
-    "en-US",
-    {
-      month: "long",
-      year: "numeric",
-    },
-  );
+  const memberSince = new Date(
+    user.created_at,
+  ).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  // --------------------------------------------------
+  // GET SAVED LOCATION
+  // --------------------------------------------------
+
+  const {
+    data: profileData,
+    error: profileError,
+  } = await supabase
+    .from("profiles")
+    .select("city, zip_code")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError) {
+    console.error(
+      "PROFILE - Error loading profile:",
+      profileError,
+    );
+  }
+
+  const city = profileData?.city || "";
+  const zip = profileData?.zip_code || "";
 
   // --------------------------------------------------
   // GET USER'S DOG REPORTS
   // --------------------------------------------------
 
-  const { data: dogsData, error: dogsError } = await supabase
+  const {
+    data: dogsData,
+    error: dogsError,
+  } = await supabase
     .from("dogs")
     .select("id, status")
     .eq("owner_id", user.id);
 
   if (dogsError) {
-    console.error("PROFILE - Error loading dogs:", dogsError);
+    console.error(
+      "PROFILE - Error loading dogs:",
+      dogsError,
+    );
   }
 
   const dogs = dogsData ?? [];
 
   // --------------------------------------------------
-  // REAL REPORT COUNTS
+  // REPORT COUNTS
   // --------------------------------------------------
 
   const missingReports = dogs.filter(
-    (dog) => dog.status?.toLowerCase() === "missing",
+    (dog) =>
+      dog.status?.toLowerCase() === "missing",
   ).length;
 
   const reunitedReports = dogs.filter(
-    (dog) => dog.status?.toLowerCase() === "reunited",
+    (dog) =>
+      dog.status?.toLowerCase() === "reunited",
   ).length;
 
   const closedReports = dogs.filter(
-    (dog) => dog.status?.toLowerCase() === "closed",
+    (dog) =>
+      dog.status?.toLowerCase() === "closed",
   ).length;
 
   // --------------------------------------------------
   // GET USER'S FOUND REPORTS
-  //
-  // reports.user_id -> user.id
-  // found_reports.report_id -> reports.id
   // --------------------------------------------------
 
-  const { data: reportsData, error: reportsError } = await supabase
+  const {
+    data: reportsData,
+    error: reportsError,
+  } = await supabase
     .from("reports")
     .select("id")
     .eq("user_id", user.id);
@@ -101,7 +132,10 @@ export default async function ProfilePage() {
   let foundReports = 0;
 
   if (reportIds.length > 0) {
-    const { count, error: foundError } = await supabase
+    const {
+      count,
+      error: foundError,
+    } = await supabase
       .from("found_reports")
       .select("id", {
         count: "exact",
@@ -120,13 +154,6 @@ export default async function ProfilePage() {
   }
 
   // --------------------------------------------------
-  // TEMPORARY LOCATION
-  // --------------------------------------------------
-
-  const city = "Fremont";
-  const zip = "94538";
-
-  // --------------------------------------------------
   // PAGE
   // --------------------------------------------------
 
@@ -137,67 +164,40 @@ export default async function ProfilePage() {
         {/* PROFILE HEADER */}
 
         <section className="overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f]">
-
           <div className="h-32 bg-[#078c78]" />
 
           <div className="px-6 pb-7 sm:px-8">
+            <div className="-mt-14 flex flex-col gap-5 sm:flex-row sm:items-end">
 
-            <div className="-mt-14 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <UserAvatar
+                name={name}
+                avatarUrl={avatarUrl}
+                className="h-28 w-28 border-4 border-[#06483f]"
+                textClassName="text-3xl"
+              />
 
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+                  PawSearch
+                </p>
 
-                {/* AVATAR */}
+                <h1 className="mt-1 text-4xl font-bold">
+                  {name}
+                </h1>
 
-                <UserAvatar
-                  name={name}
-                  avatarUrl={avatarUrl}
-                  className="h-28 w-28 border-4 border-[#06483f]"
-                  textClassName="text-3xl"
-                />
-
-                {/* USER INFO */}
-
-                <div>
-
-                  <p className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-                    My Account
-                  </p>
-
-                  <h1 className="mt-1 text-4xl font-bold">
-                    My Information
-                  </h1>
-
-                  <p className="mt-1 text-[#b7d5ce]">
-                    {name}
-                  </p>
-
-                  <p className="mt-1 text-sm text-[#9bbab3]">
-                    Member since {memberSince}
-                  </p>
-
-                </div>
-
+                <p className="mt-1 text-sm text-[#9bbab3]">
+                  Member since {memberSince}
+                </p>
               </div>
 
-              <Link
-                href="/me"
-                className="rounded-md border border-[#1b5b51] px-5 py-2.5 text-center font-bold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
-              >
-                Edit Information
-              </Link>
-
             </div>
-
           </div>
-
         </section>
 
         {/* REPORT ACTIVITY */}
 
         <section className="mt-8">
-
           <div>
-
             <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
               Your PawSearch Activity
             </span>
@@ -209,15 +209,13 @@ export default async function ProfilePage() {
             <p className="mt-2 text-[#b7d5ce]">
               A summary of your missing-pet and found-animal reports.
             </p>
-
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-            {/* MISSING REPORTS */}
+            {/* MISSING */}
 
             <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
-
               <div className="text-3xl">
                 🐕
               </div>
@@ -229,13 +227,11 @@ export default async function ProfilePage() {
               <p className="mt-1 text-[#b7d5ce]">
                 Missing reports
               </p>
-
             </div>
 
-            {/* FOUND REPORTS */}
+            {/* FOUND */}
 
             <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
-
               <div className="text-3xl">
                 🐾
               </div>
@@ -247,13 +243,11 @@ export default async function ProfilePage() {
               <p className="mt-1 text-[#b7d5ce]">
                 Found reports
               </p>
-
             </div>
 
             {/* REUNITED */}
 
             <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
-
               <div className="text-3xl">
                 🎉
               </div>
@@ -265,13 +259,11 @@ export default async function ProfilePage() {
               <p className="mt-1 text-[#b7d5ce]">
                 Pets reunited
               </p>
-
             </div>
 
             {/* CLOSED */}
 
             <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
-
               <div className="text-3xl">
                 📁
               </div>
@@ -283,191 +275,21 @@ export default async function ProfilePage() {
               <p className="mt-1 text-[#b7d5ce]">
                 Closed reports
               </p>
-
             </div>
 
           </div>
-
         </section>
 
-        {/* PERSONAL INFORMATION + NOTIFICATIONS */}
+        {/* MY INFORMATION */}
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-2">
-
-          {/* PERSONAL INFORMATION */}
-
-          <section className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
-
-            <div className="flex items-start justify-between gap-4">
-
-              <div>
-
-                <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-                  Information
-                </span>
-
-                <h2 className="mt-2 text-2xl font-bold">
-                  Personal Information
-                </h2>
-
-                <p className="mt-1 text-[#b7d5ce]">
-                  Your basic account information.
-                </p>
-
-              </div>
-
-              <Link
-                href="/me"
-                className="text-sm font-bold text-[#fbb12c] hover:text-[#ffc34d]"
-              >
-                Edit
-              </Link>
-
-            </div>
-
-            <div className="mt-6 space-y-4">
-
-              {/* NAME */}
-
-              <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
-
-                <p className="text-sm text-[#9bbab3]">
-                  Name
-                </p>
-
-                <p className="mt-1 font-semibold">
-                  {name}
-                </p>
-
-              </div>
-
-              {/* EMAIL */}
-
-              <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
-
-                <p className="text-sm text-[#9bbab3]">
-                  Email
-                </p>
-
-                <p className="mt-1 font-semibold">
-                  {email}
-                </p>
-
-              </div>
-
-              {/* LOCATION */}
-
-              <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
-
-                <p className="text-sm text-[#9bbab3]">
-                  Saved Location
-                </p>
-
-                <p className="mt-1 font-semibold">
-                  {city}, {zip}
-                </p>
-
-              </div>
-
-            </div>
-
-          </section>
-
-          {/* NOTIFICATIONS */}
-
-          <section className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
-
-            <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-              Preferences
-            </span>
-
-            <h2 className="mt-2 text-2xl font-bold">
-              Notifications
-            </h2>
-
-            <p className="mt-1 text-[#b7d5ce]">
-              Choose what PawSearch keeps you updated about.
-            </p>
-
-            <div className="mt-6 space-y-4">
-
-              {/* NEARBY SIGHTINGS */}
-
-              <label className="flex items-center justify-between gap-4 rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
-
-                <div>
-
-                  <p className="font-semibold">
-                    Nearby sightings
-                  </p>
-
-                  <p className="mt-1 text-sm text-[#9bbab3]">
-                    Get notified about sightings near your reports.
-                  </p>
-
-                </div>
-
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="h-5 w-5 accent-[#fbb12c]"
-                />
-
-              </label>
-
-              {/* CONTACT REQUESTS */}
-
-              <label className="flex items-center justify-between gap-4 rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
-
-                <div>
-
-                  <p className="font-semibold">
-                    Contact requests
-                  </p>
-
-                  <p className="mt-1 text-sm text-[#9bbab3]">
-                    Know when someone wants to contact you.
-                  </p>
-
-                </div>
-
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="h-5 w-5 accent-[#fbb12c]"
-                />
-
-              </label>
-
-              {/* PAWSEARCH UPDATES */}
-
-              <label className="flex items-center justify-between gap-4 rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
-
-                <div>
-
-                  <p className="font-semibold">
-                    PawSearch updates
-                  </p>
-
-                  <p className="mt-1 text-sm text-[#9bbab3]">
-                    Important product and community updates.
-                  </p>
-
-                </div>
-
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="h-5 w-5 accent-[#fbb12c]"
-                />
-
-              </label>
-
-            </div>
-
-          </section>
-
-        </div>
+        <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+          <ProfileInformation
+            initialName={name}
+            email={email}
+            initialCity={city}
+            initialZip={zip}
+          />
+        </section>
 
         {/* PRIVACY & SAFETY */}
 
@@ -488,7 +310,6 @@ export default async function ProfilePage() {
           <div className="mt-6 grid gap-4 md:grid-cols-2">
 
             <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5">
-
               <div className="text-2xl">
                 🔒
               </div>
@@ -498,14 +319,12 @@ export default async function ProfilePage() {
               </h3>
 
               <p className="mt-2 text-sm leading-relaxed text-[#b7d5ce]">
-                Your personal contact information should remain private when
-                communicating with other PawSearch users.
+                Your personal contact information should remain
+                private when communicating with other PawSearch users.
               </p>
-
             </div>
 
             <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5">
-
               <div className="text-2xl">
                 ⚠️
               </div>
@@ -515,14 +334,12 @@ export default async function ProfilePage() {
               </h3>
 
               <p className="mt-2 text-sm leading-relaxed text-[#b7d5ce]">
-                Never send money or sensitive information based only on an
-                unverified claim that someone found your pet.
+                Never send money or sensitive information based only
+                on an unverified claim that someone found your pet.
               </p>
-
             </div>
 
           </div>
-
         </section>
 
         {/* ACCOUNT SETTINGS */}
@@ -538,85 +355,25 @@ export default async function ProfilePage() {
           </h2>
 
           <p className="mt-2 text-[#b7d5ce]">
-            Manage your account preferences and information.
+            Manage your account and PawSearch activity.
           </p>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-
-            <Link
-              href="/me"
-              className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5 transition hover:border-[#fbb12c]"
-            >
-
-              <div className="text-2xl">
-                ⚙️
-              </div>
-
-              <h3 className="mt-3 font-bold">
-                Account Preferences
-              </h3>
-
-              <p className="mt-1 text-sm text-[#b7d5ce]">
-                Manage your saved location and account preferences.
-              </p>
-
-            </Link>
-
-            <Link
-              href="/dashboard"
-              className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5 transition hover:border-[#fbb12c]"
-            >
-
-              <div className="text-2xl">
-                📋
-              </div>
-
-              <h3 className="mt-3 font-bold">
-                My Reports & Activity
-              </h3>
-
-              <p className="mt-1 text-sm text-[#b7d5ce]">
-                View your reports, saved reports, and recent activity.
-              </p>
-
-            </Link>
-
-          </div>
 
           <div className="mt-6 border-t border-[#1b5b51] pt-6">
 
-            <form action="/auth/signout" method="post">
-
+            <form
+              action="/auth/signout"
+              method="post"
+            >
               <button
                 type="submit"
                 className="rounded-md border border-red-400/40 px-5 py-2.5 font-semibold text-red-300 transition hover:bg-red-500/10"
               >
                 Sign Out
               </button>
-
             </form>
 
-            <p className="mt-3 text-xs text-[#9bbab3]">
-              Account deletion and authentication settings can be connected to
-              Supabase later.
-            </p>
-
           </div>
-
         </section>
-
-        {/* FOOTER */}
-
-        <div className="mt-10 text-center">
-
-          <Link
-            href="/"
-            className="font-semibold text-[#fbb12c] hover:text-[#ffc34d]"
-          >
-            ← Back to PawSearch
-          </Link>
-
-        </div>
 
       </div>
     </main>

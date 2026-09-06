@@ -258,12 +258,12 @@ export default async function DashboardPage() {
 
           <div className="mt-6 flex flex-wrap gap-3">
 
-            <Link
-              href={`/dogs/${dog.id}`}
-              className="rounded-md border border-[#1b5b51] px-4 py-2 font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
-            >
-              View / Change Status
-            </Link>
+          <Link
+            href={`/dashboard/dogs/${dog.id}`}
+            className="rounded-md border border-[#1b5b51] px-4 py-2 font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
+          >
+            View / Change Status
+          </Link>
 
             <Link
               href={`/dogs/${dog.id}/edit`}

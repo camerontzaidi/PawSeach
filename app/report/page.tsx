@@ -532,17 +532,9 @@ return ( <main className="min-h-screen bg-[#003d35] px-6 py-10 text-white"> <div
         </h2>
 
         <div className="grid gap-4 md:grid-cols-2">
-
           <input
             name="lastSeenAt"
             type="datetime-local"
-            required
-            className={inputStyle}
-          />
-
-          <input
-            name="locationDescription"
-            placeholder="Last seen location *"
             required
             className={inputStyle}
           />
@@ -561,7 +553,6 @@ return ( <main className="min-h-screen bg-[#003d35] px-6 py-10 text-white"> <div
 
             Last-seen time is approximate
           </label>
-
         </div>
 
         <textarea
