@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import UserAvatar from "@/components/UserAvatar";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -29,6 +30,11 @@ export default async function ProfilePage() {
     "User";
 
   const email = user.email || "Email unavailable";
+
+  const avatarUrl =
+    user.user_metadata?.avatar_url ||
+    user.user_metadata?.picture ||
+    null;
 
   const memberSince = new Date(user.created_at).toLocaleDateString(
     "en-US",
@@ -142,9 +148,12 @@ export default async function ProfilePage() {
 
                 {/* AVATAR */}
 
-                <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-[#06483f] bg-[#fbb12c] text-5xl font-bold text-[#003d35]">
-                  {name.charAt(0).toUpperCase()}
-                </div>
+                <UserAvatar
+                  name={name}
+                  avatarUrl={avatarUrl}
+                  className="h-28 w-28 border-4 border-[#06483f]"
+                  textClassName="text-3xl"
+                />
 
                 {/* USER INFO */}
 
