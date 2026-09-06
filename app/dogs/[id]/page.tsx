@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
+
 import ReportManagement from "@/components/ReportManagement";
 import CopyReportLink from "@/components/CopyReportLink";
+import ContactPetOwner from "@/components/ContactPetOwner";
+import MessagePetOwner from "@/components/MessagePetOwner";
 
 type Dog = {
   id: string;
@@ -35,80 +38,132 @@ type DogPhoto = {
   is_primary: boolean;
 };
 
-function formatDateTime(date: string | null) {
+type ProfileLocation = {
+  city: string | null;
+  zip_code: string | null;
+};
+
+function formatDateTime(
+  date: string | null,
+) {
   if (!date) {
     return "Date unavailable";
   }
 
-  return new Date(date).toLocaleString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return new Date(
+    date,
+  ).toLocaleString(
+    "en-US",
+    {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    },
+  );
 }
 
-function formatStatus(status: string) {
+function formatStatus(
+  status: string,
+) {
   return status
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replaceAll(
+      "_",
+      " ",
+    )
+    .replace(
+      /\b\w/g,
+      (letter) =>
+        letter.toUpperCase(),
+    );
 }
 
-function formatValue(value: string | null) {
+function formatValue(
+  value: string | null,
+) {
   if (!value) {
     return "Not provided";
   }
 
   return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replaceAll(
+      "_",
+      " ",
+    )
+    .replace(
+      /\b\w/g,
+      (letter) =>
+        letter.toUpperCase(),
+    );
 }
 
 export default async function DogReportPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{
+    id: string;
+  }>;
 }) {
-  const { id } = await params;
+  const { id } =
+    await params;
 
-  const supabase = await createClient();
+  const supabase =
+    await createClient();
 
-  // --------------------------------------------------
-  // GET LOGGED-IN USER
-  // --------------------------------------------------
+  /*
+   * --------------------------------------------------
+   * GET CURRENT USER
+   * --------------------------------------------------
+   */
 
-  // --------------------------------------------------
-  // GET REAL DOG REPORT
-  // --------------------------------------------------
+  const {
+    data: {
+      user,
+    },
+  } =
+    await supabase.auth.getUser();
 
-  const { data: dogData, error: dogError } = await supabase
-    .from("dogs")
-    .select(`
-      id,
-      owner_id,
-      dog_name,
-      breed,
-      primary_color,
-      secondary_color,
-      sex,
-      size,
-      estimated_birth_year,
-      microchipped,
-      description,
-      latitude,
-      longitude,
-      status,
-      created_at,
-      last_seen_at,
-      location_description,
-      time_is_approximate,
-      circumstances,
-      reward_offered,
-      reward_amount
-    `)
-    .eq("id", id)
-    .maybeSingle();
+  /*
+   * --------------------------------------------------
+   * GET REAL DOG REPORT
+   * --------------------------------------------------
+   */
+
+  const {
+    data: dogData,
+    error: dogError,
+  } =
+    await supabase
+      .from("dogs")
+      .select(`
+        id,
+        owner_id,
+        dog_name,
+        breed,
+        primary_color,
+        secondary_color,
+        sex,
+        size,
+        estimated_birth_year,
+        microchipped,
+        description,
+        latitude,
+        longitude,
+        status,
+        created_at,
+        last_seen_at,
+        location_description,
+        time_is_approximate,
+        circumstances,
+        reward_offered,
+        reward_amount
+      `)
+      .eq(
+        "id",
+        id,
+      )
+      .maybeSingle();
 
   if (dogError) {
     console.error(
@@ -126,13 +181,67 @@ export default async function DogReportPage({
     notFound();
   }
 
-  const dog = dogData as Dog;
+  const dog =
+    dogData as Dog;
 
-  // --------------------------------------------------
-  // GET DOG PHOTOS
-  // --------------------------------------------------
+  /*
+   * --------------------------------------------------
+   * DETERMINE WHO IS VIEWING THIS REPORT
+   * --------------------------------------------------
+   */
 
-  const { data: photosData, error: photosError } =
+  const isLoggedIn =
+    Boolean(user);
+
+  const isOwner =
+    user?.id ===
+    dog.owner_id;
+
+  /*
+   * --------------------------------------------------
+   * GET REPORT OWNER'S CITY + ZIP CODE
+   * --------------------------------------------------
+   */
+
+  const {
+    data: profileData,
+    error: profileError,
+  } =
+    await supabase
+      .from("profiles")
+      .select(
+        "city, zip_code",
+      )
+      .eq(
+        "id",
+        dog.owner_id,
+      )
+      .maybeSingle();
+
+  if (profileError) {
+    console.error(
+      "VIEW REPORT - Error loading profile location:",
+      profileError,
+    );
+  }
+
+  const profileLocation =
+    (
+      profileData as
+        | ProfileLocation
+        | null
+    ) ?? null;
+
+  /*
+   * --------------------------------------------------
+   * GET DOG PHOTOS
+   * --------------------------------------------------
+   */
+
+  const {
+    data: photosData,
+    error: photosError,
+  } =
     await supabase
       .from("dog_photos")
       .select(`
@@ -141,8 +250,16 @@ export default async function DogReportPage({
         storage_path,
         is_primary
       `)
-      .eq("dog_id", dog.id)
-      .order("is_primary", { ascending: false });
+      .eq(
+        "dog_id",
+        dog.id,
+      )
+      .order(
+        "is_primary",
+        {
+          ascending: false,
+        },
+      );
 
   if (photosError) {
     console.error(
@@ -151,41 +268,54 @@ export default async function DogReportPage({
     );
   }
 
-  const photos = (photosData ?? []) as DogPhoto[];
+  const photos =
+    (
+      photosData ?? []
+    ) as DogPhoto[];
 
   const primaryPhoto =
-    photos.find((photo) => photo.is_primary) ??
+    photos.find(
+      (photo) =>
+        photo.is_primary,
+    ) ??
     photos[0] ??
     null;
 
-  // --------------------------------------------------
-  // CONVERT STORAGE PATH TO PUBLIC IMAGE URL
-  // --------------------------------------------------
+  /*
+   * --------------------------------------------------
+   * CONVERT STORAGE PATH TO PUBLIC IMAGE URL
+   * --------------------------------------------------
+   */
 
-  let photoUrl: string | null = null;
+  let photoUrl:
+    | string
+    | null =
+    null;
 
-  if (primaryPhoto?.storage_path) {
-    const { data: publicUrlData } =
+  if (
+    primaryPhoto?.storage_path
+  ) {
+    const {
+      data:
+        publicUrlData,
+    } =
       supabase.storage
-        .from("dog-photos")
-        .getPublicUrl(primaryPhoto.storage_path);
+        .from(
+          "dog-photos",
+        )
+        .getPublicUrl(
+          primaryPhoto.storage_path,
+        );
 
-    photoUrl = publicUrlData.publicUrl;
-
-    console.log(
-      "VIEW REPORT - Photo storage path:",
-      primaryPhoto.storage_path,
-    );
-
-    console.log(
-      "VIEW REPORT - Generated photo URL:",
-      photoUrl,
-    );
+    photoUrl =
+      publicUrlData.publicUrl;
   }
 
-  // --------------------------------------------------
-  // PAGE
-  // --------------------------------------------------
+  /*
+   * --------------------------------------------------
+   * PAGE
+   * --------------------------------------------------
+   */
 
   return (
     <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
@@ -223,9 +353,7 @@ export default async function DogReportPage({
           {/* PHOTO */}
 
           <div className="flex h-64 items-center justify-center bg-[#003d35] sm:h-96">
-
             {photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={photoUrl}
                 alt={dog.dog_name}
@@ -236,7 +364,6 @@ export default async function DogReportPage({
                 🐕
               </span>
             )}
-
           </div>
 
           <div className="p-5 sm:p-8">
@@ -251,26 +378,28 @@ export default async function DogReportPage({
                 </h2>
 
                 <p className="mt-1 text-lg text-[#b7d5ce]">
-                  {dog.breed || "Unknown breed"}
+                  {dog.breed ||
+                    "Unknown breed"}
                 </p>
               </div>
 
               <span
                 className={`w-fit rounded-full px-4 py-2 text-sm font-bold ${
-                  dog.status.toLowerCase() === "missing"
+                  dog.status.toLowerCase() ===
+                  "missing"
                     ? "bg-[#fbb12c] text-[#003d35]"
                     : "bg-[#078c78] text-white"
                 }`}
               >
-                {formatStatus(dog.status)}
+                {formatStatus(
+                  dog.status,
+                )}
               </span>
-
             </div>
 
             {/* PET INFORMATION */}
 
             <section className="mt-8">
-
               <h3 className="text-2xl font-bold">
                 Pet Information
               </h3>
@@ -283,7 +412,9 @@ export default async function DogReportPage({
                   </p>
 
                   <p className="mt-1 text-[#c3ded8]">
-                    {formatValue(dog.primary_color)}
+                    {formatValue(
+                      dog.primary_color,
+                    )}
                   </p>
                 </div>
 
@@ -293,7 +424,9 @@ export default async function DogReportPage({
                   </p>
 
                   <p className="mt-1 text-[#c3ded8]">
-                    {formatValue(dog.secondary_color)}
+                    {formatValue(
+                      dog.secondary_color,
+                    )}
                   </p>
                 </div>
 
@@ -303,7 +436,9 @@ export default async function DogReportPage({
                   </p>
 
                   <p className="mt-1 text-[#c3ded8]">
-                    {formatValue(dog.sex)}
+                    {formatValue(
+                      dog.sex,
+                    )}
                   </p>
                 </div>
 
@@ -313,7 +448,9 @@ export default async function DogReportPage({
                   </p>
 
                   <p className="mt-1 text-[#c3ded8]">
-                    {formatValue(dog.size)}
+                    {formatValue(
+                      dog.size,
+                    )}
                   </p>
                 </div>
 
@@ -323,7 +460,8 @@ export default async function DogReportPage({
                   </p>
 
                   <p className="mt-1 text-[#c3ded8]">
-                    {dog.estimated_birth_year ?? "Unknown"}
+                    {dog.estimated_birth_year ??
+                      "Unknown"}
                   </p>
                 </div>
 
@@ -333,19 +471,18 @@ export default async function DogReportPage({
                   </p>
 
                   <p className="mt-1 text-[#c3ded8]">
-                    {dog.microchipped === null
+                    {dog.microchipped ===
+                    null
                       ? "Unknown"
                       : dog.microchipped
                         ? "Yes"
                         : "No"}
                   </p>
                 </div>
-
               </div>
 
               {dog.description && (
                 <div className="mt-6">
-
                   <p className="text-sm font-semibold text-[#9bbab3]">
                     Description
                   </p>
@@ -353,10 +490,8 @@ export default async function DogReportPage({
                   <p className="mt-2 leading-relaxed text-[#c3ded8]">
                     {dog.description}
                   </p>
-
                 </div>
               )}
-
             </section>
 
             {/* LAST SEEN */}
@@ -370,13 +505,15 @@ export default async function DogReportPage({
               <div className="mt-5 grid gap-5 sm:grid-cols-2">
 
                 <div>
-
                   <p className="text-sm font-semibold text-[#9bbab3]">
                     Date & Time
                   </p>
 
                   <p className="mt-1 text-[#c3ded8]">
-                    📅 {formatDateTime(dog.last_seen_at)}
+                    📅{" "}
+                    {formatDateTime(
+                      dog.last_seen_at,
+                    )}
                   </p>
 
                   {dog.time_is_approximate && (
@@ -384,11 +521,9 @@ export default async function DogReportPage({
                       Time is approximate
                     </p>
                   )}
-
                 </div>
 
                 <div>
-
                   <p className="text-sm font-semibold text-[#9bbab3]">
                     Location
                   </p>
@@ -399,28 +534,38 @@ export default async function DogReportPage({
                       "Location unavailable"}
                   </p>
 
+                  {(profileLocation?.city ||
+                    profileLocation?.zip_code) && (
+                    <p className="mt-1 text-sm text-[#b7d5ce]">
+                      {profileLocation?.city ||
+                        "City unavailable"}
+
+                      {profileLocation?.zip_code
+                        ? ` · ${profileLocation.zip_code}`
+                        : ""}
+                    </p>
+                  )}
                 </div>
 
-                {(dog.latitude !== null ||
-                  dog.longitude !== null) && (
-
+                {(dog.latitude !==
+                  null ||
+                  dog.longitude !==
+                    null) && (
                   <div className="sm:col-span-2">
-
                     <p className="text-sm font-semibold text-[#9bbab3]">
                       Coordinates
                     </p>
 
                     <p className="mt-1 text-[#c3ded8]">
-                      {dog.latitude ?? "—"},{" "}
-                      {dog.longitude ?? "—"}
+                      {dog.latitude ??
+                        "—"}
+                      ,{" "}
+                      {dog.longitude ??
+                        "—"}
                     </p>
-
                   </div>
-
                 )}
-
               </div>
-
             </section>
 
             {/* CIRCUMSTANCES */}
@@ -435,7 +580,6 @@ export default async function DogReportPage({
                 <p className="mt-3 leading-relaxed text-[#c3ded8]">
                   {dog.circumstances}
                 </p>
-
               </section>
             )}
 
@@ -450,31 +594,84 @@ export default async function DogReportPage({
 
                 <p className="mt-3 text-[#c3ded8]">
                   🎁 Reward offered
-                  {dog.reward_amount !== null
+
+                  {dog.reward_amount !==
+                  null
                     ? ` — $${dog.reward_amount.toLocaleString()}`
                     : ""}
                 </p>
-
               </section>
             )}
 
-            {/* REPORT MANAGEMENT */}
+            {/* ---------------------------------------- */}
+            {/* CONTACT / MESSAGING */}
+            {/* ---------------------------------------- */}
 
-            <ReportManagement
-              reportId={dog.id}
-              status={dog.status}
-            />
+            {!isLoggedIn && (
+              <ContactPetOwner
+                dogName={
+                  dog.dog_name
+                }
+              />
+            )}
+
+            {isLoggedIn &&
+              !isOwner && (
+                <MessagePetOwner
+                  dogName={
+                    dog.dog_name
+                  }
+                />
+              )}
+
+            {isLoggedIn &&
+              isOwner && (
+                <section className="mt-6 rounded-xl border border-[#1b5b51] bg-[#003d35] p-5 sm:p-6">
+
+                  <h3 className="text-xl font-bold">
+                    This is your report
+                  </h3>
+
+                  <p className="mt-2 leading-relaxed text-[#b7d5ce]">
+                    You are viewing
+                    your own missing pet
+                    report. Messages from
+                    other PawSearch users
+                    will appear in your
+                    messages area once
+                    messaging is connected
+                    to the database.
+                  </p>
+                </section>
+              )}
+
+            {/* ---------------------------------------- */}
+            {/* REPORT MANAGEMENT */}
+            {/* ---------------------------------------- */}
+
+            {isOwner && (
+              <ReportManagement
+                reportId={
+                  dog.id
+                }
+                status={
+                  dog.status
+                }
+              />
+            )}
 
             {/* EDIT / BACK */}
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
 
-              <Link
-                href={`/dogs/${dog.id}/edit`}
-                className="rounded-md bg-[#078c78] px-6 py-3 text-center font-bold text-white transition hover:bg-[#067966]"
-              >
-                Edit Report
-              </Link>
+              {isOwner && (
+                <Link
+                  href={`/dogs/${dog.id}/edit`}
+                  className="rounded-md bg-[#078c78] px-6 py-3 text-center font-bold text-white transition hover:bg-[#067966]"
+                >
+                  Edit Report
+                </Link>
+              )}
 
               <Link
                 href="/dashboard"
@@ -482,7 +679,6 @@ export default async function DogReportPage({
               >
                 Back to My Reports
               </Link>
-
             </div>
 
             {/* SHARE */}
@@ -494,12 +690,12 @@ export default async function DogReportPage({
               </h3>
 
               <p className="mt-2 leading-relaxed text-[#c3ded8]">
-                Help spread the word by sharing this report with
+                Help spread the word by
+                sharing this report with
                 people in your community.
               </p>
 
               <CopyReportLink />
-
             </section>
 
           </div>
