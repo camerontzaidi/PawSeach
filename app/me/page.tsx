@@ -12,15 +12,6 @@ type Dog = {
   created_at: string;
 };
 
-type FoundReport = {
-  id: string;
-  breed: string | null;
-  color: string | null;
-  city: string | null;
-  zip_code: string | null;
-  status: string;
-  found_at: string | null;
-};
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -102,64 +93,6 @@ export default async function MePage() {
   const dogs = (dogsData ?? []) as Dog[];
 
   // --------------------------------------------------
-  // GET USER'S FOUND REPORT IDS
-  // --------------------------------------------------
-
-  const { data: reportsData, error: reportsError } =
-    await supabase
-      .from("reports")
-      .select("id")
-      .eq("user_id", user.id);
-
-  if (reportsError) {
-    console.error(
-      "ME - Error loading reports:",
-      reportsError,
-    );
-  }
-
-  const reportIds = (reportsData ?? []).map(
-    (report) => report.id,
-  );
-
-  // --------------------------------------------------
-  // GET USER'S FOUND REPORTS
-  // --------------------------------------------------
-
-  let foundReports: FoundReport[] = [];
-
-  if (reportIds.length > 0) {
-    const { data: foundData, error: foundError } =
-      await supabase
-        .from("found_reports")
-        .select(
-          `
-            id,
-            breed,
-            color,
-            city,
-            zip_code,
-            status,
-            found_at
-          `,
-        )
-        .in("report_id", reportIds)
-        .order("found_at", {
-          ascending: false,
-        });
-
-    if (foundError) {
-      console.error(
-        "ME - Error loading found reports:",
-        foundError,
-      );
-    }
-
-    foundReports =
-      (foundData ?? []) as FoundReport[];
-  }
-
-  // --------------------------------------------------
   // GET MISSING PETS NEAR SAVED LOCATION
   //
   // NOTE:
@@ -230,20 +163,6 @@ export default async function MePage() {
         .join(" · "),
       date: dog.created_at,
     })),
-
-    ...foundReports.map((report) => ({
-      id: `found-${report.id}`,
-      icon: "📍",
-      title: "Reported a pet sighting",
-      description: [
-        report.breed || "Found animal",
-        report.city,
-        report.zip_code,
-      ]
-        .filter(Boolean)
-        .join(" · "),
-      date: report.found_at,
-    })),
   ]
     .sort(
       (a, b) =>
@@ -299,8 +218,7 @@ export default async function MePage() {
           </h2>
 
           <p className="mt-2 text-[#b7d5ce]">
-            View, edit, and manage your missing pet and
-            found animal reports.
+            View, edit, and manage your missing pet reports.
           </p>
 
           <div className="mt-6 rounded-xl bg-[#003d35] p-6">

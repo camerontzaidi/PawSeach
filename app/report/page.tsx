@@ -404,7 +404,7 @@ return ( <main className="min-h-screen bg-[#003d35] px-6 py-10 text-white"> <div
                 example suggestions. Future versions
                 will use AI and location data to
                 identify specific nearby places based
-                on your dog's profile and last known
+                on your dog&apos;s profile and last known
                 location.
               </p>
             </div>
@@ -562,74 +562,16 @@ return ( <main className="min-h-screen bg-[#003d35] px-6 py-10 text-white"> <div
         />
       </section>
 
-      {/* CONTACT INFORMATION */}
+      {/* SECURE CONTACT */}
 
       <section className="rounded-xl border border-[#fbb12c]/60 bg-[#06483f] p-6">
-
-        <div className="flex items-start gap-4">
-
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#fbb12c] text-2xl text-[#003d35]">
-            💬
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold">
-              Contact Information
-            </h2>
-
-            <p className="mt-2 leading-relaxed text-[#b7d5ce]">
-              Add contact information so someone
-              who finds your pet has a way to
-              reach you.
-            </p>
-          </div>
-
-        </div>
-
-        <div className="mt-5 rounded-lg border border-[#1b5b51] bg-[#003d35] p-4">
-          <p className="font-semibold text-[#fbb12c]">
-            🛡️ PawSearch Messaging
-          </p>
-
-          <p className="mt-1 text-sm leading-relaxed text-[#b7d5ce]">
-            If you create a PawSearch account,
-            people can contact you securely through
-            the app without publicly seeing your
-            personal contact information. Their
-            first message will be sent as a request,
-            and you can choose whether to accept
-            the conversation.
-          </p>
-        </div>
-
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-
-          <input
-            name="contactName"
-            type="text"
-            placeholder="Contact name *"
-            required
-            className={inputStyle}
-          />
-
-          <input
-            name="contactMethod"
-            type="text"
-            placeholder="Email or phone number *"
-            required
-            className={inputStyle}
-          />
-
-        </div>
-
-        <p className="mt-4 text-sm leading-relaxed text-[#b7d5ce]">
-          This information gives people a way to
-          contact you if they find your pet.
-          Future PawSearch messaging will allow
-          account holders to communicate securely
-          inside the app instead.
+        <h2 className="text-2xl font-bold">🛡️ PawSearch Messaging</h2>
+        <p className="mt-3 leading-relaxed text-[#b7d5ce]">
+          Your personal phone number and email address are not required on
+          this public report. Signed-in community members can send you one
+          protected message request. They cannot send another message unless
+          you accept the request in Messages.
         </p>
-
       </section>
 
       {/* REWARD */}

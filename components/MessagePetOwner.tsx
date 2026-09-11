@@ -1,153 +1,137 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useState, useTransition } from "react";
+import {
+  createMessageRequest,
+  type MessageRequestResult,
+} from "@/app/messages/actions";
 
 type MessagePetOwnerProps = {
-dogName: string;
+  dogId: string;
+  dogName: string;
+  existingConversationId?: string | null;
+  existingStatus?: "pending" | "accepted" | "declined" | null;
 };
 
 export default function MessagePetOwner({
-dogName,
+  dogId,
+  dogName,
+  existingConversationId = null,
+  existingStatus = null,
 }: MessagePetOwnerProps) {
-const [messageRequestSent, setMessageRequestSent] =
-useState(false);
+  const [message, setMessage] = useState("");
+  const [result, setResult] = useState<MessageRequestResult | null>(
+    existingConversationId
+      ? {
+          success: true,
+          message: "",
+          conversationId: existingConversationId,
+          status: existingStatus ?? "pending",
+        }
+      : null,
+  );
+  const [isPending, startTransition] = useTransition();
 
-const [message, setMessage] =
-useState("");
+  const conversationId = result?.conversationId ?? existingConversationId;
+  const status = result?.status ?? existingStatus;
 
-function handleSubmit(
-event: React.FormEvent<HTMLFormElement>,
-) {
-event.preventDefault();
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const body = message.trim();
+    if (!body) return;
 
+    startTransition(async () => {
+      const requestResult = await createMessageRequest(dogId, body);
+      setResult(requestResult);
+      if (requestResult.success) setMessage("");
+    });
+  }
 
-if (!message.trim()) {
-  return;
-}
+  if (conversationId) {
+    const accepted = status === "accepted";
+    const declined = status === "declined";
 
-/*
- * UI ONLY FOR NOW.
- *
- * Later this will:
- *
- * 1. Create a message request.
- * 2. Prevent duplicate requests.
- * 3. Notify the pet owner.
- * 4. Wait for the owner to accept.
- */
-
-setMessageRequestSent(true);
-
-
-}
-
-if (messageRequestSent) {
-return ( <section className="mt-6 rounded-xl border border-[#fbb12c]/60 bg-[#06483f] p-5 sm:p-6"> <div className="flex gap-4"> <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#fbb12c] text-2xl text-[#003d35]">
-⏳ </div>
-
-```
-      <div>
+    return (
+      <section className="mt-6 rounded-xl border border-[#fbb12c]/60 bg-[#06483f] p-5 sm:p-6">
         <h3 className="text-xl font-bold">
-          Message Request Sent
+          {accepted
+            ? "Conversation Accepted"
+            : declined
+              ? "Message Request Declined"
+              : "Message Request Sent"}
         </h3>
 
         <p className="mt-2 leading-relaxed text-[#c3ded8]">
-          Your message request about{" "}
-          <span className="font-bold text-white">
-            {dogName}
-          </span>{" "}
-          has been sent to the pet owner.
+          {accepted
+            ? `The owner of ${dogName} accepted your request.`
+            : declined
+              ? `The owner of ${dogName} declined this request. No additional messages can be sent for this report.`
+              : `Your one initial message about ${dogName} is waiting for the owner to review it.`}
         </p>
 
-        <div className="mt-4 rounded-lg border border-[#1b5b51] bg-[#003d35] p-4">
-          <p className="font-semibold text-[#fbb12c]">
-            Waiting for acceptance
-          </p>
+        {accepted && (
+          <Link
+            href={`/messages/${conversationId}`}
+            className="mt-4 inline-block rounded-md bg-[#078c78] px-5 py-2.5 font-bold text-white"
+          >
+            Open Conversation →
+          </Link>
+        )}
 
-          <p className="mt-1 text-sm leading-relaxed text-[#b7d5ce]">
-            The pet owner must accept your first message
-            request before the conversation can continue.
-          </p>
-        </div>
+        {!accepted && !declined && (
+          <div className="mt-4 rounded-lg border border-[#1b5b51] bg-[#003d35] p-4">
+            <p className="font-semibold text-[#fbb12c]">Waiting for acceptance</p>
+            <p className="mt-1 text-sm text-[#b7d5ce]">
+              You cannot send a second message unless the owner accepts this request.
+            </p>
+          </div>
+        )}
+      </section>
+    );
+  }
 
-        <p className="mt-4 text-sm text-[#b7d5ce]">
-          You can only send one initial message request
-          for this report.
+  return (
+    <section className="mt-6 rounded-xl border border-[#078c78]/70 bg-[#06483f] p-5 sm:p-6">
+      <h3 className="text-xl font-bold">💬 Message the Pet Owner</h3>
+      <p className="mt-2 text-[#b7d5ce]">
+        Have you seen {dogName} or have information that may help?
+      </p>
+
+      <div className="mt-5 rounded-lg border border-[#1b5b51] bg-[#003d35] p-4">
+        <p className="font-semibold text-[#fbb12c]">🛡️ Protected first message</p>
+        <p className="mt-1 text-sm text-[#b7d5ce]">
+          You may send one initial message request. The owner must accept it
+          before additional messaging is enabled.
         </p>
       </div>
-    </div>
-  </section>
-);
 
+      <form onSubmit={handleSubmit} className="mt-5">
+        <textarea
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
+          required
+          minLength={2}
+          maxLength={2000}
+          rows={5}
+          placeholder={`Tell the owner what you know about ${dogName}...`}
+          className="w-full rounded-md border border-[#9bd8c9] bg-[#003d35] p-3 text-white"
+        />
 
-}
+        <button
+          type="submit"
+          disabled={!message.trim() || isPending}
+          className="mt-4 w-full rounded-md bg-[#078c78] px-6 py-3 font-bold text-white disabled:opacity-50"
+        >
+          {isPending ? "Sending..." : "Send Message Request"}
+        </button>
+      </form>
 
-return ( <section className="mt-6 rounded-xl border border-[#078c78]/70 bg-[#06483f] p-5 sm:p-6"> <div className="flex items-start gap-4"> <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#078c78] text-2xl">
-💬 </div>
-
-
-    <div>
-      <h3 className="text-xl font-bold">
-        Message the Pet Owner
-      </h3>
-
-      <p className="mt-1 leading-relaxed text-[#b7d5ce]">
-        Have you seen {dogName} or have information
-        that may help bring them home?
-      </p>
-    </div>
-  </div>
-
-  <div className="mt-5 rounded-lg border border-[#1b5b51] bg-[#003d35] p-4">
-    <p className="font-semibold text-[#fbb12c]">
-      🛡️ Protected first message
-    </p>
-
-    <p className="mt-1 text-sm leading-relaxed text-[#b7d5ce]">
-      Your first message is sent as a request. The pet
-      owner must accept it before either person can
-      continue the conversation.
-    </p>
-  </div>
-
-  <form
-    onSubmit={handleSubmit}
-    className="mt-5"
-  >
-    <label
-      htmlFor="message"
-      className="mb-2 block text-sm font-semibold text-[#c3ded8]"
-    >
-      Your message
-    </label>
-
-    <textarea
-      id="message"
-      value={message}
-      onChange={(event) =>
-        setMessage(event.target.value)
-      }
-      required
-      rows={5}
-      placeholder={`Tell the owner what you know about ${dogName}...`}
-      className="w-full rounded-md border border-[#9bd8c9] bg-[#003d35] p-3 text-white placeholder:text-[#b7d5ce] focus:border-[#fbb12c] focus:outline-none"
-    />
-
-    <button
-      type="submit"
-      disabled={!message.trim()}
-      className="mt-4 w-full rounded-md bg-[#078c78] px-6 py-3 font-bold text-white transition hover:bg-[#067966] disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      Send Message Request
-    </button>
-  </form>
-
-  <p className="mt-4 text-center text-sm text-[#b7d5ce]">
-    To reduce spam, you can send only one initial message
-    request unless the pet owner accepts the conversation.
-  </p>
-</section>
-
-
-);
+      {result && !result.success && (
+        <p className="mt-4 rounded-md border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">
+          {result.message}
+        </p>
+      )}
+    </section>
+  );
 }

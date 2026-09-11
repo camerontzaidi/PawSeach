@@ -387,12 +387,9 @@ export default async function DogsPage({
             <p className="mt-1 text-[#b7d5ce]">
 
               {reports.length}{" "}
-
               {reports.length === 1
-                ? "missing pet"
-                : "missing pets"}{" "}
-
-              found
+                ? "active missing pet report"
+                : "active missing pet reports"}
 
             </p>
 
