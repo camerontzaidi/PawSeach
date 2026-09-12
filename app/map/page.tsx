@@ -12,12 +12,12 @@ export default async function MapPage() {
         </span>
 
         <h1 className="mt-2 text-4xl font-bold sm:text-5xl">
-          Missing and Found Pets Near You
+          Missing Pets Near You
         </h1>
 
         <p className="mt-4 max-w-2xl text-lg text-[#b7d5ce]">
-          Explore active missing and found pet reports on the map and help
-          reunite pets with their families.
+          Explore active missing-pet reports on the map and help reunite pets
+          with their families.
         </p>
 
         <div className="mt-8">

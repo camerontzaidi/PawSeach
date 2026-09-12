@@ -107,53 +107,6 @@ export default async function ProfilePage() {
   ).length;
 
   // --------------------------------------------------
-  // GET USER'S FOUND REPORTS
-  // --------------------------------------------------
-
-  const {
-    data: reportsData,
-    error: reportsError,
-  } = await supabase
-    .from("reports")
-    .select("id")
-    .eq("user_id", user.id);
-
-  if (reportsError) {
-    console.error(
-      "PROFILE - Error loading reports:",
-      reportsError,
-    );
-  }
-
-  const reportIds = (reportsData ?? []).map(
-    (report) => report.id,
-  );
-
-  let foundReports = 0;
-
-  if (reportIds.length > 0) {
-    const {
-      count,
-      error: foundError,
-    } = await supabase
-      .from("found_reports")
-      .select("id", {
-        count: "exact",
-        head: true,
-      })
-      .in("report_id", reportIds);
-
-    if (foundError) {
-      console.error(
-        "PROFILE - Error loading found reports:",
-        foundError,
-      );
-    } else {
-      foundReports = count ?? 0;
-    }
-  }
-
-  // --------------------------------------------------
   // PAGE
   // --------------------------------------------------
 
@@ -207,11 +160,11 @@ export default async function ProfilePage() {
             </h2>
 
             <p className="mt-2 text-[#b7d5ce]">
-              A summary of your missing-pet and found-animal reports.
+              A summary of your missing-pet reports and their outcomes.
             </p>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
 
             {/* MISSING */}
 
@@ -226,22 +179,6 @@ export default async function ProfilePage() {
 
               <p className="mt-1 text-[#b7d5ce]">
                 Missing reports
-              </p>
-            </div>
-
-            {/* FOUND */}
-
-            <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
-              <div className="text-3xl">
-                🐾
-              </div>
-
-              <p className="mt-4 text-3xl font-bold">
-                {foundReports}
-              </p>
-
-              <p className="mt-1 text-[#b7d5ce]">
-                Found reports
               </p>
             </div>
 

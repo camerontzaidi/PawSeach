@@ -371,14 +371,14 @@ export default async function DashboardPage() {
         </section>
 
         {/* ========================================== */}
-        {/* FOUND / REUNITED PET REPORTS */}
+        {/* REUNITED PET REPORTS */}
         {/* ========================================== */}
 
         <section className="mt-12">
 
           <div>
             <h2 className="text-3xl font-bold">
-              My Found Animal Reports
+              Reunited Pets
             </h2>
 
             <p className="mt-1 text-[#b7d5ce]">
@@ -398,7 +398,7 @@ export default async function DashboardPage() {
               </div>
 
               <h3 className="mt-4 text-xl font-bold">
-                No found animal reports
+                No reunited pets yet
               </h3>
 
               <p className="mt-2 text-[#b7d5ce]">

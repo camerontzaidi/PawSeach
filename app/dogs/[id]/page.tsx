@@ -2,9 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 
-import ReportManagement from "@/components/ReportManagement";
 import CopyReportLink from "@/components/CopyReportLink";
-import ContactPetOwner from "@/components/ContactPetOwner";
 import MessagePetOwner from "@/components/MessagePetOwner";
 
 type Dog = {
@@ -196,6 +194,38 @@ export default async function DogReportPage({
   const isOwner =
     user?.id ===
     dog.owner_id;
+
+  type ExistingConversation = {
+    id: string;
+    status: "pending" | "accepted" | "declined";
+  };
+
+  let existingConversation: ExistingConversation | null = null;
+
+  if (user && !isOwner) {
+    const {
+      data: existingConversationData,
+      error: existingConversationError,
+    } = await supabase
+      .from("conversations")
+      .select("id, status")
+      .eq("dog_id", dog.id)
+      .eq("requester_id", user.id)
+      .maybeSingle();
+
+    if (existingConversationError) {
+      console.error(
+        "VIEW REPORT - Error loading existing message request:",
+        existingConversationError,
+      );
+    } else if (existingConversationData) {
+      existingConversation = {
+        id: existingConversationData.id,
+        status:
+          existingConversationData.status as ExistingConversation["status"],
+      };
+    }
+  }
 
   /*
    * --------------------------------------------------
@@ -608,21 +638,32 @@ export default async function DogReportPage({
             {/* ---------------------------------------- */}
 
             {!isLoggedIn && (
-              <ContactPetOwner
-                dogName={
-                  dog.dog_name
-                }
-              />
+              <section className="mt-6 rounded-xl border border-[#fbb12c]/60 bg-[#06483f] p-5 sm:p-6">
+                <h3 className="text-xl font-bold">
+                  Have information about {dog.dog_name}?
+                </h3>
+                <p className="mt-2 leading-relaxed text-[#b7d5ce]">
+                  Sign in or create an account to send the owner a protected
+                  message request. Guest visitors can view reports, but cannot
+                  contact owners or change PawSearch data.
+                </p>
+                <Link
+                  href={`/login?next=/dogs/${dog.id}`}
+                  className="mt-4 inline-block rounded-md bg-[#fbb12c] px-5 py-2.5 font-bold text-[#003d35]"
+                >
+                  Sign In to Message Owner
+                </Link>
+              </section>
             )}
 
-            {isLoggedIn &&
-              !isOwner && (
-                <MessagePetOwner
-                  dogName={
-                    dog.dog_name
-                  }
-                />
-              )}
+            {isLoggedIn && !isOwner && (
+              <MessagePetOwner
+                dogId={dog.id}
+                dogName={dog.dog_name}
+                existingConversationId={existingConversation?.id ?? null}
+                existingStatus={existingConversation?.status ?? null}
+              />
+            )}
 
             {isLoggedIn &&
               isOwner && (
