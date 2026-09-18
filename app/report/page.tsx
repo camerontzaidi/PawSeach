@@ -22,6 +22,18 @@ city: string;
 zipCode: string;
 size: string;
 locationDescription: string;
+circumstances: string;
+};
+
+type AiRecommendation = {
+title: string;
+explanation: string;
+priority: "high" | "medium" | "low";
+};
+
+type AiRecommendationResponse = {
+recommendations: AiRecommendation[];
+strategy: string[];
 };
 
 export default function ReportPage() {
@@ -46,6 +58,68 @@ isPending,
 startTransition,
 ] =
 useTransition();
+
+const [
+aiRecommendations,
+setAiRecommendations,
+] =
+useState<AiRecommendationResponse | null>(null);
+
+const [
+isLoadingAi,
+setIsLoadingAi,
+] =
+useState(false);
+
+const [
+aiError,
+setAiError,
+] =
+useState<string | null>(null);
+
+async function loadAiRecommendations(
+reportInfo: SubmittedReportInfo,
+) {
+setIsLoadingAi(true);
+setAiError(null);
+setAiRecommendations(null);
+
+try {
+  const response = await fetch(
+    "/api/ai-recommendations",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(
+        reportInfo,
+      ),
+    },
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ??
+        "AI recommendations are unavailable right now.",
+    );
+  }
+
+  setAiRecommendations(
+    data as AiRecommendationResponse,
+  );
+} catch (error) {
+  setAiError(
+    error instanceof Error
+      ? error.message
+      : "AI recommendations are unavailable right now.",
+  );
+} finally {
+  setIsLoadingAi(false);
+}
+}
 
 function handleSubmit(
 event: React.FormEvent<HTMLFormElement>,
@@ -107,6 +181,13 @@ const reportInfo:
           "locationDescription",
         ) ?? "",
       ),
+
+    circumstances:
+      String(
+        formData.get(
+          "circumstances",
+        ) ?? "",
+      ),
   };
 
 startTransition(
@@ -127,6 +208,10 @@ startTransition(
         reportInfo,
       );
 
+      void loadAiRecommendations(
+        reportInfo,
+      );
+
       form.reset();
 
       window.scrollTo({
@@ -135,6 +220,14 @@ startTransition(
       });
     } else {
       setSubmittedReport(
+        null,
+      );
+
+      setAiRecommendations(
+        null,
+      );
+
+      setAiError(
         null,
       );
 
@@ -265,129 +358,89 @@ return ( <main className="min-h-screen bg-[#003d35] px-6 py-10 text-white"> <div
               PawSearch recommends checking first.
             </p>
 
-            {/* RECOMMENDED PLACES */}
-
-            <div className="mt-6">
-              <h3 className="text-xl font-bold">
-                📍 Recommended Areas to Check
-              </h3>
-
-              <div className="mt-4 space-y-4">
-
-                <div className="rounded-lg border border-[#1b5b51] bg-[#003d35] p-4">
-                  <h4 className="font-bold text-[#fbb12c]">
-                    🌳 Nearby Parks and Open Spaces
-                  </h4>
-
-                  <p className="mt-2 text-sm leading-6 text-[#b7d5ce]">
-                    Check nearby parks, trails,
-                    fields, and open spaces around
-                    the last known location. Dogs
-                    may travel through open areas
-                    or follow familiar walking routes.
-                  </p>
-                </div>
-
-                <div className="rounded-lg border border-[#1b5b51] bg-[#003d35] p-4">
-                  <h4 className="font-bold text-[#fbb12c]">
-                    🏘️ Residential Neighborhoods
-                  </h4>
-
-                  <p className="mt-2 text-sm leading-6 text-[#b7d5ce]">
-                    Start with streets closest to
-                    where{" "}
-
-                    {submittedReport.dogName
-                      ? submittedReport.dogName
-                      : "your dog"}
-
-                    {" "}was last seen. Ask
-                    neighbors to check backyards,
-                    garages, sheds, and other
-                    enclosed spaces.
-                  </p>
-                </div>
-
-                <div className="rounded-lg border border-[#1b5b51] bg-[#003d35] p-4">
-                  <h4 className="font-bold text-[#fbb12c]">
-                    🌿 Quiet and Sheltered Areas
-                  </h4>
-
-                  <p className="mt-2 text-sm leading-6 text-[#b7d5ce]">
-                    A frightened dog may hide
-                    under bushes, porches, decks,
-                    vehicles, or other sheltered
-                    areas. Search slowly and listen
-                    carefully.
-                  </p>
-                </div>
-
+            {isLoadingAi && (
+              <div className="mt-6 rounded-lg border border-[#1b5b51] bg-[#003d35] p-5 text-[#b7d5ce]">
+                🤖 Generating personalized search recommendations...
               </div>
-            </div>
+            )}
 
-            {/* SEARCH STRATEGY */}
+            {aiError && (
+              <div className="mt-6 rounded-lg border border-[#1b5b51] bg-[#003d35] p-5">
+                <p className="font-bold text-[#fbb12c]">
+                  AI recommendations are temporarily unavailable.
+                </p>
+                <p className="mt-2 text-sm text-[#b7d5ce]">
+                  Your missing-pet report was still submitted successfully.
+                  {` ${aiError}`}
+                </p>
+              </div>
+            )}
 
-            <div className="mt-7">
-              <h3 className="text-xl font-bold">
-                🔍 Suggested Search Strategy
-              </h3>
+            {aiRecommendations && (
+              <>
+                {/* RECOMMENDED PLACES */}
 
-              <ol className="mt-4 space-y-3 text-[#b7d5ce]">
+                <div className="mt-6">
+                  <h3 className="text-xl font-bold">
+                    📍 Recommended Areas to Check
+                  </h3>
 
-                <li className="flex gap-3">
-                  <span className="font-bold text-[#fbb12c]">
-                    1.
-                  </span>
+                  <div className="mt-4 space-y-4">
+                    {aiRecommendations.recommendations.map(
+                      (
+                        recommendation,
+                        index,
+                      ) => (
+                        <div
+                          key={`${recommendation.title}-${index}`}
+                          className="rounded-lg border border-[#1b5b51] bg-[#003d35] p-4"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="font-bold text-[#fbb12c]">
+                              {recommendation.title}
+                            </h4>
 
-                  <span>
-                    Search closest to the last
-                    known location first
+                            <span className="rounded-full border border-[#1b5b51] px-2 py-1 text-xs uppercase text-[#b7d5ce]">
+                              {recommendation.priority} priority
+                            </span>
+                          </div>
 
-                    {submittedReport.locationDescription
-                      ? ` (${submittedReport.locationDescription})`
-                      : ""}
-                    .
-                  </span>
-                </li>
+                          <p className="mt-2 text-sm leading-6 text-[#b7d5ce]">
+                            {recommendation.explanation}
+                          </p>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
 
-                <li className="flex gap-3">
-                  <span className="font-bold text-[#fbb12c]">
-                    2.
-                  </span>
+                {/* SEARCH STRATEGY */}
 
-                  <span>
-                    Gradually expand your search
-                    outward instead of immediately
-                    searching far away.
-                  </span>
-                </li>
+                <div className="mt-7">
+                  <h3 className="text-xl font-bold">
+                    🔍 Suggested Search Strategy
+                  </h3>
 
-                <li className="flex gap-3">
-                  <span className="font-bold text-[#fbb12c]">
-                    3.
-                  </span>
-
-                  <span>
-                    Ask nearby residents to check
-                    enclosed spaces such as
-                    garages, sheds, and backyards.
-                  </span>
-                </li>
-
-                <li className="flex gap-3">
-                  <span className="font-bold text-[#fbb12c]">
-                    4.
-                  </span>
-
-                  <span>
-                    Share your PawSearch report
-                    with people in the surrounding
-                    area.
-                  </span>
-                </li>
-
-              </ol>
-            </div>
+                  <ol className="mt-4 space-y-3 text-[#b7d5ce]">
+                    {aiRecommendations.strategy.map(
+                      (step, index) => (
+                        <li
+                          key={`${step}-${index}`}
+                          className="flex gap-3"
+                        >
+                          <span className="font-bold text-[#fbb12c]">
+                            {index + 1}.
+                          </span>
+                          <span>
+                            {step}
+                          </span>
+                        </li>
+                      ),
+                    )}
+                  </ol>
+                </div>
+              </>
+            )}
 
             {/* AI DISCLAIMER */}
 
@@ -400,12 +453,12 @@ return ( <main className="min-h-screen bg-[#003d35] px-6 py-10 text-white"> <div
 
                 {" "}
 
-                These recommendations are currently
-                example suggestions. Future versions
-                will use AI and location data to
-                identify specific nearby places based
-                on your dog&apos;s profile and last known
-                location.
+                These are AI-generated search suggestions
+                based on the information in your report.
+                They are possibilities, not confirmed
+                sightings or predictions of your dog&apos;s
+                location. Use normal safety precautions
+                while searching.
               </p>
             </div>
 
