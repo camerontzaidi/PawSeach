@@ -17,7 +17,7 @@ export default function Home() {
           community a safe way to share information directly with them.
         </p>
 
-        <div className="mt-10 grid w-full gap-6 md:grid-cols-2">
+        <div className="mt-10 grid w-full gap-6 md:grid-cols-3">
           <Link
             href="/report"
             className="rounded-xl border border-[#1b5b51] bg-[#fbb12c] p-8 text-left text-[#003d35] transition hover:scale-[1.02]"
@@ -26,6 +26,17 @@ export default function Home() {
             <p className="mt-3">
               Create an account or sign in to publish a report with photos,
               details, and the last known location.
+            </p>
+          </Link>
+
+          <Link
+            href="/sightings/report"
+            className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-8 text-left transition hover:border-[#fbb12c]"
+          >
+            <h2 className="text-2xl font-bold">🐾 Report a Found Pet</h2>
+            <p className="mt-3 text-[#c3ded8]">
+              Found a pet? Share photos, details, and where you found them to
+              help reconnect them with their family.
             </p>
           </Link>
 
