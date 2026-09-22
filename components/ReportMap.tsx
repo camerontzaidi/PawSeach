@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Map, { Marker, Popup } from "react-map-gl/mapbox";
+import Map, {
+  Marker,
+  Popup,
+  NavigationControl,
+} from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 type Report = {
@@ -34,26 +38,29 @@ export default function ReportMap({
   center = DEFAULT_CENTER,
   zoom = 4,
 }: ReportMapProps) {
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedReport, setSelectedReport] =
+    useState<Report | null>(null);
 
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const token =
+    process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   if (!token) {
     return (
-      <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-8 text-center">
-        <h2 className="text-xl font-bold text-white">
+      <div className="rounded-2xl border border-gray-300 bg-white p-8 text-center">
+        <h2 className="text-xl font-bold text-black">
           Map unavailable
         </h2>
-        <p className="mt-2 text-sm text-[#b7d5ce]">
-          PawSearch could not load the map because the Mapbox access token is
-          not configured.
+
+        <p className="mt-2 text-sm text-gray-500">
+          PawSearch could not load the map because
+          the Mapbox access token is not configured.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#1b5b51]">
+    <div className="overflow-hidden rounded-2xl border border-gray-300">
       <Map
         initialViewState={{
           longitude: center.longitude,
@@ -67,7 +74,22 @@ export default function ReportMap({
           height: "600px",
         }}
         reuseMaps
+
+        /* Map interactions */
+        scrollZoom={true}
+        dragPan={true}
+        dragRotate={false}
+        doubleClickZoom={true}
+        touchZoomRotate={true}
+        keyboard={true}
       >
+        {/* ZOOM + PAN CONTROLS */}
+        <NavigationControl
+          position="top-right"
+          showCompass={false}
+          showZoom={true}
+        />
+
         {reports.map((report) => (
           <Marker
             key={report.id}
@@ -94,10 +116,12 @@ export default function ReportMap({
             longitude={selectedReport.longitude}
             latitude={selectedReport.latitude}
             anchor="top"
-            onClose={() => setSelectedReport(null)}
+            onClose={() =>
+              setSelectedReport(null)
+            }
             closeOnClick={false}
           >
-            <div className="min-w-[200px] p-2 text-[#003d35]">
+            <div className="min-w-[200px] p-2 text-black">
               <span className="inline-block rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-red-700">
                 Missing
               </span>
@@ -116,7 +140,7 @@ export default function ReportMap({
 
               <Link
                 href={`/dogs/${selectedReport.id}`}
-                className="mt-3 inline-block rounded-md bg-[#078c78] px-4 py-2 text-sm font-bold text-white"
+                className="mt-3 inline-block rounded-xl bg-black px-4 py-2 text-sm font-bold text-white transition hover:bg-gray-800"
               >
                 View Report →
               </Link>

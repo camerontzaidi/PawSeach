@@ -12,6 +12,15 @@ type Dog = {
   created_at: string;
 };
 
+type FoundReport = {
+  id: string;
+  breed: string | null;
+  color: string | null;
+  city: string | null;
+  zip_code: string | null;
+  status: string;
+  found_at: string | null;
+};
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -44,12 +53,14 @@ export default async function MePage() {
   // GET USER PROFILE / SAVED LOCATION
   // --------------------------------------------------
 
-  const { data: profileData, error: profileError } =
-    await supabase
-      .from("profiles")
-      .select("city, zip_code")
-      .eq("id", user.id)
-      .single();
+  const {
+    data: profileData,
+    error: profileError,
+  } = await supabase
+    .from("profiles")
+    .select("city, zip_code")
+    .eq("id", user.id)
+    .single();
 
   if (profileError) {
     console.error(
@@ -58,30 +69,33 @@ export default async function MePage() {
     );
   }
 
-  const city = profileData?.city || "";
-  const zip = profileData?.zip_code || "";
+  const city = profileData?.city?.trim() || "";
+  const state = profileData?.state?.trim() || "";
+  const zip = profileData?.zip_code?.trim() || "";
 
   // --------------------------------------------------
   // GET USER'S MISSING REPORTS
   // --------------------------------------------------
 
-  const { data: dogsData, error: dogsError } =
-    await supabase
-      .from("dogs")
-      .select(
-        `
-          id,
-          dog_name,
-          breed,
-          status,
-          location_description,
-          created_at
-        `,
-      )
-      .eq("owner_id", user.id)
-      .order("created_at", {
-        ascending: false,
-      });
+  const {
+    data: dogsData,
+    error: dogsError,
+  } = await supabase
+    .from("dogs")
+    .select(
+      `
+        id,
+        dog_name,
+        breed,
+        status,
+        location_description,
+        created_at
+      `,
+    )
+    .eq("owner_id", user.id)
+    .order("created_at", {
+      ascending: false,
+    });
 
   if (dogsError) {
     console.error(
@@ -93,16 +107,74 @@ export default async function MePage() {
   const dogs = (dogsData ?? []) as Dog[];
 
   // --------------------------------------------------
+  // GET USER'S FOUND REPORT IDS
+  // --------------------------------------------------
+
+  const {
+    data: reportsData,
+    error: reportsError,
+  } = await supabase
+    .from("reports")
+    .select("id")
+    .eq("user_id", user.id);
+
+  if (reportsError) {
+    console.error(
+      "ME - Error loading reports:",
+      reportsError,
+    );
+  }
+
+  const reportIds = (reportsData ?? []).map(
+    (report) => report.id,
+  );
+
+  // --------------------------------------------------
+  // GET USER'S FOUND REPORTS
+  // --------------------------------------------------
+
+  let foundReports: FoundReport[] = [];
+
+  if (reportIds.length > 0) {
+    const {
+      data: foundData,
+      error: foundError,
+    } = await supabase
+      .from("found_reports")
+      .select(
+        `
+          id,
+          breed,
+          color,
+          city,
+          zip_code,
+          status,
+          found_at
+        `,
+      )
+      .in("report_id", reportIds)
+      .order("found_at", {
+        ascending: false,
+      });
+
+    if (foundError) {
+      console.error(
+        "ME - Error loading found reports:",
+        foundError,
+      );
+    }
+
+    foundReports =
+      (foundData ?? []) as FoundReport[];
+  }
+
+  // --------------------------------------------------
   // GET MISSING PETS NEAR SAVED LOCATION
-  //
-  // NOTE:
-  // This assumes your dogs table has city + zip_code.
-  // If it doesn't, we will adjust this query.
   // --------------------------------------------------
 
   let nearbyMissingCount = 0;
 
-  if (city || zip) {
+  if (city || state || zip) {
     let nearbyQuery = supabase
       .from("dogs")
       .select("id", {
@@ -112,9 +184,16 @@ export default async function MePage() {
       .eq("status", "missing");
 
     if (city) {
-      nearbyQuery = nearbyQuery.eq(
+      nearbyQuery = nearbyQuery.ilike(
         "city",
-        city,
+        `%${city}%`,
+      );
+    }
+
+    if (state) {
+      nearbyQuery = nearbyQuery.ilike(
+        "state",
+        `%${state}%`,
       );
     }
 
@@ -141,12 +220,13 @@ export default async function MePage() {
   }
 
   // --------------------------------------------------
-  // BUILD REAL RECENT ACTIVITY
+  // BUILD RECENT ACTIVITY
   // --------------------------------------------------
 
   const recentActivity = [
     ...dogs.map((dog) => ({
       id: `dog-${dog.id}`,
+      href: `/dogs/${dog.id}`,
       icon:
         dog.status.toLowerCase() === "reunited"
           ? "🎉"
@@ -163,6 +243,21 @@ export default async function MePage() {
         .join(" · "),
       date: dog.created_at,
     })),
+
+    ...foundReports.map((report) => ({
+      id: `found-${report.id}`,
+      href: `/sightings/${report.id}`,
+      icon: "📍",
+      title: "Reported a pet sighting",
+      description: [
+        report.breed || "Found animal",
+        report.city,
+        report.zip_code,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      date: report.found_at,
+    })),
   ]
     .sort(
       (a, b) =>
@@ -171,29 +266,49 @@ export default async function MePage() {
     )
     .slice(0, 5);
 
+  // --------------------------------------------------
+  // BUILD MISSING PET SEARCH URL
+  // --------------------------------------------------
+
+  const searchParams = new URLSearchParams();
+
+  if (city) {
+    searchParams.set("city", city);
+  }
+
+  if (state) {
+    searchParams.set("state", state);
+  }
+
+  if (zip) {
+    searchParams.set("zip", zip);
+  }
+
   const dogsUrl =
-    city || zip
-      ? `/dogs?city=${encodeURIComponent(
-          city,
-        )}&zip=${encodeURIComponent(zip)}`
+    searchParams.toString().length > 0
+      ? `/dogs?${searchParams.toString()}`
       : "/dogs";
 
+  // --------------------------------------------------
+  // PAGE
+  // --------------------------------------------------
+
   return (
-    <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
+    <main className="min-h-screen bg-gradient-to-r from-white via-[#e4e4e4] to-[#b5b5b5] px-4 py-10 text-black sm:px-6 sm:py-16">
       <div className="mx-auto max-w-6xl">
 
         {/* HEADER */}
 
         <div>
-          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+          <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
             My PawSearch
-          </span>
+          </p>
 
-          <h1 className="mt-2 text-4xl font-bold sm:text-5xl">
+          <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
             My Reports & My Information
           </h1>
 
-          <p className="mt-3 text-lg text-[#b7d5ce]">
+          <p className="mt-3 max-w-2xl text-lg leading-7 text-gray-600">
             Manage your location, reports, and activity
             on PawSearch.
           </p>
@@ -203,33 +318,38 @@ export default async function MePage() {
 
         <LocationSettings
           initialCity={city}
+          initialState={state}
           initialZip={zip}
         />
 
         {/* MY REPORTS */}
 
-        <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
-          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-            Reports
-          </span>
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+          <div className="mb-7 flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+              01
+            </div>
 
-          <h2 className="mt-2 text-2xl font-bold">
-            My Reports
-          </h2>
+            <div>
+              <h2 className="text-2xl font-bold">
+                My Reports
+              </h2>
 
-          <p className="mt-2 text-[#b7d5ce]">
-            View, edit, and manage your missing pet reports.
-          </p>
+              <p className="mt-1 text-gray-600">
+                View, edit, and manage your missing pet
+                and found animal reports.
+              </p>
+            </div>
+          </div>
 
-          <div className="mt-6 rounded-xl bg-[#003d35] p-6">
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-
               <div>
                 <h3 className="text-lg font-bold">
                   Manage Your Reports
                 </h3>
 
-                <p className="mt-1 text-sm text-[#b7d5ce]">
+                <p className="mt-1 text-sm leading-6 text-gray-600">
                   Update report information, view details,
                   and manage report statuses.
                 </p>
@@ -237,80 +357,91 @@ export default async function MePage() {
 
               <Link
                 href="/dashboard"
-                className="shrink-0 rounded-md bg-[#078c78] px-6 py-3 text-center font-bold text-white transition hover:bg-[#067966]"
+                className="shrink-0 rounded-xl bg-black px-6 py-3 text-center font-bold text-white transition hover:bg-gray-800"
               >
                 View My Reports →
               </Link>
-
             </div>
           </div>
         </section>
 
         {/* MISSING PETS NEAR YOU */}
 
-        <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
-          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-            Community
-          </span>
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+          <div className="mb-7 flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+              02
+            </div>
 
-          <h2 className="mt-2 text-2xl font-bold">
-            Missing Pets Near You
-          </h2>
+            <div>
+              <h2 className="text-2xl font-bold">
+                Missing Pets Near You
+              </h2>
 
-          <p className="mt-2 text-[#b7d5ce]">
-            Explore missing pet reports around your saved
-            location.
-          </p>
+              <p className="mt-1 text-gray-600">
+                Explore missing pet reports around your
+                saved location.
+              </p>
+            </div>
+          </div>
 
-          <div className="mt-6 flex flex-col items-center rounded-xl bg-[#003d35] p-8 text-center">
-
-            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-[#fbb12c]">
-              <span className="text-3xl font-bold">
-                {city || zip
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center">
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-4 border-[#fbb12c] bg-white">
+              <span className="text-3xl font-bold text-black">
+                {city || state || zip
                   ? nearbyMissingCount
                   : "—"}
               </span>
             </div>
 
-            <p className="mt-4 text-lg font-semibold">
+            <p className="mt-4 text-lg font-semibold text-black">
               Missing pet reports
             </p>
 
-            <p className="mt-1 text-sm text-[#b7d5ce]">
-              {city || zip
-                ? `Based on ${city || "your selected area"}${zip ? `, ${zip}` : ""}.`
+            <p className="mt-1 text-sm text-gray-500">
+              {city || state || zip
+                ? `Based on ${
+                    [city, state]
+                      .filter(Boolean)
+                      .join(", ") ||
+                    "your selected area"
+                  }${
+                    zip ? ` ${zip}` : ""
+                  }.`
                 : "Save your location above to search pets near you."}
             </p>
 
             <Link
               href={dogsUrl}
-              className="mt-6 rounded-md bg-[#078c78] px-6 py-3 font-bold text-white transition hover:bg-[#067966]"
+              className="mt-6 inline-block rounded-xl bg-black px-6 py-3 font-bold text-white transition hover:bg-gray-800"
             >
               View Missing Pets Near Me →
             </Link>
-
           </div>
         </section>
 
         {/* RECENT ACTIVITY */}
 
-        <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+          <div className="mb-7 flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+              03
+            </div>
 
-          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-            Activity
-          </span>
+            <div>
+              <h2 className="text-2xl font-bold">
+                Recent Activity
+              </h2>
 
-          <h2 className="mt-2 text-2xl font-bold">
-            Recent Activity
-          </h2>
-
-          <p className="mt-1 text-[#b7d5ce]">
-            Keep track of your recent activity on PawSearch.
-          </p>
+              <p className="mt-1 text-gray-600">
+                Keep track of your recent activity on
+                PawSearch.
+              </p>
+            </div>
+          </div>
 
           {recentActivity.length === 0 ? (
-            <div className="mt-6 rounded-xl bg-[#003d35] p-8 text-center">
-
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center">
               <div className="text-4xl">
                 🐾
               </div>
@@ -319,49 +450,46 @@ export default async function MePage() {
                 No activity yet
               </h3>
 
-              <p className="mt-2 text-sm text-[#b7d5ce]">
-                Your recent reports and activity will appear
-                here.
+              <p className="mt-2 text-sm text-gray-500">
+                Your recent reports and activity will
+                appear here.
               </p>
-
             </div>
           ) : (
-            <div className="mt-6 space-y-3">
-
+            <div className="space-y-3">
               {recentActivity.map((activity) => (
-                <div
+                <Link
                   key={activity.id}
-                  className="flex gap-4 rounded-xl border border-[#1b5b51] bg-[#003d35] p-4"
+                  href={activity.href}
+                  className="group flex gap-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 transition hover:border-gray-400 hover:bg-white hover:shadow-sm"
                 >
-
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#06483f] text-xl">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl">
                     {activity.icon}
                   </div>
 
                   <div className="min-w-0 flex-1">
-
-                    <p className="font-bold">
+                    <p className="font-bold text-black group-hover:underline">
                       {activity.title}
                     </p>
 
                     {activity.description && (
-                      <p className="mt-1 text-sm text-[#b7d5ce]">
+                      <p className="mt-1 text-sm text-gray-600">
                         {activity.description}
                       </p>
                     )}
 
-                    <p className="mt-1 text-xs text-[#9bbab3]">
+                    <p className="mt-1 text-xs text-gray-500">
                       {formatDate(activity.date)}
                     </p>
-
                   </div>
 
-                </div>
+                  <div className="flex items-center text-gray-400 transition group-hover:translate-x-1 group-hover:text-black">
+                    →
+                  </div>
+                </Link>
               ))}
-
             </div>
           )}
-
         </section>
 
       </div>

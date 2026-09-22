@@ -111,13 +111,13 @@ export default async function ProfilePage() {
   // --------------------------------------------------
 
   return (
-    <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
+    <main className="min-h-screen bg-gradient-to-r from-white via-[#e4e4e4] to-[#b5b5b5] px-4 py-10 text-black sm:px-6 sm:py-16">
       <div className="mx-auto max-w-6xl">
 
         {/* PROFILE HEADER */}
 
-        <section className="overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f]">
-          <div className="h-32 bg-[#078c78]" />
+        <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
+          <div className="h-32 bg-gray-200" />
 
           <div className="px-6 pb-7 sm:px-8">
             <div className="-mt-14 flex flex-col gap-5 sm:flex-row sm:items-end">
@@ -125,7 +125,7 @@ export default async function ProfilePage() {
               <UserAvatar
                 name={name}
                 avatarUrl={avatarUrl}
-                className="h-28 w-28 border-4 border-[#06483f]"
+                className="h-28 w-28 border-4 border-white"
                 textClassName="text-3xl"
               />
 
@@ -138,7 +138,7 @@ export default async function ProfilePage() {
                   {name}
                 </h1>
 
-                <p className="mt-1 text-sm text-[#9bbab3]">
+                <p className="mt-1 text-sm text-gray-500">
                   Member since {memberSince}
                 </p>
               </div>
@@ -159,7 +159,7 @@ export default async function ProfilePage() {
               Your Reports
             </h2>
 
-            <p className="mt-2 text-[#b7d5ce]">
+            <p className="mt-2 text-gray-600">
               A summary of your missing-pet reports and their outcomes.
             </p>
           </div>
@@ -168,7 +168,7 @@ export default async function ProfilePage() {
 
             {/* MISSING */}
 
-            <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
               <div className="text-3xl">
                 🐕
               </div>
@@ -177,14 +177,14 @@ export default async function ProfilePage() {
                 {missingReports}
               </p>
 
-              <p className="mt-1 text-[#b7d5ce]">
+              <p className="mt-1 text-gray-600">
                 Missing reports
               </p>
             </div>
 
             {/* REUNITED */}
 
-            <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
               <div className="text-3xl">
                 🎉
               </div>
@@ -193,14 +193,14 @@ export default async function ProfilePage() {
                 {reunitedReports}
               </p>
 
-              <p className="mt-1 text-[#b7d5ce]">
+              <p className="mt-1 text-gray-600">
                 Pets reunited
               </p>
             </div>
 
             {/* CLOSED */}
 
-            <div className="rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6">
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
               <div className="text-3xl">
                 📁
               </div>
@@ -209,7 +209,7 @@ export default async function ProfilePage() {
                 {closedReports}
               </p>
 
-              <p className="mt-1 text-[#b7d5ce]">
+              <p className="mt-1 text-gray-600">
                 Closed reports
               </p>
             </div>
@@ -219,7 +219,7 @@ export default async function ProfilePage() {
 
         {/* MY INFORMATION */}
 
-        <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+        <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
           <ProfileInformation
             initialName={name}
             email={email}
@@ -230,7 +230,7 @@ export default async function ProfilePage() {
 
         {/* PRIVACY & SAFETY */}
 
-        <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+        <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
 
           <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
             Safety
@@ -240,13 +240,13 @@ export default async function ProfilePage() {
             Privacy & Safety
           </h2>
 
-          <p className="mt-2 text-[#b7d5ce]">
+          <p className="mt-2 text-gray-600">
             Keep your information protected while using PawSearch.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
 
-            <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
               <div className="text-2xl">
                 🔒
               </div>
@@ -255,13 +255,13 @@ export default async function ProfilePage() {
                 Private Contact Information
               </h3>
 
-              <p className="mt-2 text-sm leading-relaxed text-[#b7d5ce]">
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">
                 Your personal contact information should remain
                 private when communicating with other PawSearch users.
               </p>
             </div>
 
-            <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-5">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
               <div className="text-2xl">
                 ⚠️
               </div>
@@ -270,7 +270,7 @@ export default async function ProfilePage() {
                 Stay Alert for Scams
               </h3>
 
-              <p className="mt-2 text-sm leading-relaxed text-[#b7d5ce]">
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">
                 Never send money or sensitive information based only
                 on an unverified claim that someone found your pet.
               </p>
@@ -281,7 +281,7 @@ export default async function ProfilePage() {
 
         {/* ACCOUNT SETTINGS */}
 
-        <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
+        <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
 
           <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
             Account
@@ -291,11 +291,11 @@ export default async function ProfilePage() {
             Account Settings
           </h2>
 
-          <p className="mt-2 text-[#b7d5ce]">
+          <p className="mt-2 text-gray-600">
             Manage your account and PawSearch activity.
           </p>
 
-          <div className="mt-6 border-t border-[#1b5b51] pt-6">
+          <div className="mt-6 border-t border-gray-200 pt-6">
 
             <form
               action="/auth/signout"
@@ -303,7 +303,7 @@ export default async function ProfilePage() {
             >
               <button
                 type="submit"
-                className="rounded-md border border-red-400/40 px-5 py-2.5 font-semibold text-red-300 transition hover:bg-red-500/10"
+                className="rounded-md border border-red-300 px-5 py-2.5 font-semibold text-red-600 transition hover:bg-red-50"
               >
                 Sign Out
               </button>

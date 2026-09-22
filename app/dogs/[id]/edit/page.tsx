@@ -7,7 +7,7 @@ import LocationPicker from "@/components/LocationPicker";
 import { createClient } from "@/utils/supabase/client";
 
 const inputStyle =
-  "w-full rounded-md border border-[#9bd8c9] bg-[#003d35] p-3 text-white placeholder:text-[#b7d5ce] focus:border-[#fbb12c] focus:outline-none";
+  "w-full rounded-md border border-gray-300 bg-white p-3 text-black placeholder:text-gray-400 outline-none focus:border-black";
 
 type Dog = {
   id: string;
@@ -126,15 +126,12 @@ export default function EditDogReportPage() {
           : "",
         locationDescription:
           dog.location_description ?? "",
-        latitude:
-          dog.latitude?.toString() ?? "",
-        longitude:
-          dog.longitude?.toString() ?? "",
+        latitude: dog.latitude?.toString() ?? "",
+        longitude: dog.longitude?.toString() ?? "",
         timeIsApproximate:
           dog.time_is_approximate ?? false,
         description: dog.description ?? "",
-        circumstances:
-          dog.circumstances ?? "",
+        circumstances: dog.circumstances ?? "",
         rewardOffered:
           dog.reward_offered ?? false,
         rewardAmount:
@@ -195,8 +192,7 @@ export default function EditDogReportPage() {
           formData.estimatedBirthYear
             ? Number(formData.estimatedBirthYear)
             : null,
-        microchipped:
-          formData.microchipped,
+        microchipped: formData.microchipped,
         last_seen_at:
           formData.lastSeenAt
             ? new Date(formData.lastSeenAt).toISOString()
@@ -253,9 +249,9 @@ export default function EditDogReportPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
+      <main className="min-h-screen bg-gradient-to-r from-white via-[#e4e4e4] to-[#b5b5b5] px-4 py-10 text-black sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl">
-          <div className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-8 text-center">
+          <div className="rounded-3xl bg-white p-8 text-center shadow-sm">
             <p className="text-lg font-semibold">
               Loading report...
             </p>
@@ -267,17 +263,17 @@ export default function EditDogReportPage() {
 
   if (error && !formData.dogName) {
     return (
-      <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
+      <main className="min-h-screen bg-gradient-to-r from-white via-[#e4e4e4] to-[#b5b5b5] px-4 py-10 text-black sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl">
           <Link
             href="/dashboard"
-            className="text-sm font-semibold text-[#b7d5ce] hover:text-[#fbb12c]"
+            className="text-sm font-semibold text-gray-600 transition hover:text-black"
           >
             ← Back to My Reports
           </Link>
 
-          <div className="mt-8 rounded-xl border border-red-400 bg-red-900/30 p-6">
-            <p className="font-bold">
+          <div className="mt-8 rounded-3xl border border-red-200 bg-white p-6 shadow-sm">
+            <p className="font-bold text-red-600">
               {error}
             </p>
           </div>
@@ -287,12 +283,12 @@ export default function EditDogReportPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
-      <div className="mx-auto max-w-3xl">
+    <main className="min-h-screen bg-gradient-to-r from-white via-[#e4e4e4] to-[#b5b5b5] px-4 py-10 text-black sm:px-6 sm:py-16">
+      <div className="mx-auto max-w-4xl">
 
         <Link
           href={`/dogs/${params.id}`}
-          className="inline-flex items-center text-sm font-semibold text-[#b7d5ce] transition hover:text-[#fbb12c]"
+          className="inline-flex items-center text-sm font-semibold text-gray-600 transition hover:text-black"
         >
           ← Back to Report
         </Link>
@@ -302,11 +298,11 @@ export default function EditDogReportPage() {
             Edit Report
           </span>
 
-          <h1 className="mt-2 text-4xl font-bold">
+          <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
             Edit Missing Pet Report
           </h1>
 
-          <p className="mt-3 text-lg text-[#b7d5ce]">
+          <p className="mt-3 max-w-2xl text-lg leading-7 text-gray-600">
             Update the information for this missing pet report.
           </p>
         </div>
@@ -314,9 +310,9 @@ export default function EditDogReportPage() {
         {saved && (
           <div
             role="status"
-            className="mt-6 rounded-lg border border-emerald-400 bg-emerald-900/30 p-4"
+            className="mt-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
           >
-            <p className="font-bold">
+            <p className="font-bold text-gray-700">
               ✓ Changes saved successfully. Returning to the report...
             </p>
           </div>
@@ -325,9 +321,9 @@ export default function EditDogReportPage() {
         {error && (
           <div
             role="alert"
-            className="mt-6 rounded-lg border border-red-400 bg-red-900/30 p-4"
+            className="mt-6 rounded-2xl border border-red-200 bg-white p-4 shadow-sm"
           >
-            <p className="font-bold">
+            <p className="font-bold text-red-600">
               {error}
             </p>
           </div>
@@ -340,12 +336,24 @@ export default function EditDogReportPage() {
 
           {/* PET INFORMATION */}
 
-          <section className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6">
-            <h2 className="mb-5 text-2xl font-bold">
-              Pet Information
-            </h2>
+          <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+            <div className="mb-7 flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+                01
+              </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  Pet Information
+                </h2>
+
+                <p className="mt-1 text-gray-600">
+                  Update your pet's identifying information.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
 
               <div>
                 <label
@@ -528,7 +536,7 @@ export default function EditDogReportPage() {
                 />
               </div>
 
-              <label className="flex items-center gap-3 rounded-md border border-[#9bd8c9] p-3">
+              <label className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4">
                 <input
                   type="checkbox"
                   checked={formData.microchipped}
@@ -538,9 +546,10 @@ export default function EditDogReportPage() {
                       event.target.checked,
                     )
                   }
+                  className="h-4 w-4 accent-black"
                 />
 
-                <span>
+                <span className="font-semibold">
                   Microchipped
                 </span>
               </label>
@@ -556,18 +565,30 @@ export default function EditDogReportPage() {
                 )
               }
               placeholder="Description and distinctive features..."
-              className={`${inputStyle} mt-4 h-32`}
+              className={`${inputStyle} mt-5 h-32 resize-none`}
             />
           </section>
 
           {/* LAST SEEN */}
 
-          <section className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6">
-            <h2 className="mb-5 text-2xl font-bold">
-              Last Seen Information
-            </h2>
+          <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+            <div className="mb-7 flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+                02
+              </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  Last Seen Information
+                </h2>
+
+                <p className="mt-1 text-gray-600">
+                  Update when and where your pet was last seen.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
 
               <div>
                 <label
@@ -584,28 +605,6 @@ export default function EditDogReportPage() {
                   onChange={(event) =>
                     updateField(
                       "lastSeenAt",
-                      event.target.value,
-                    )
-                  }
-                  required
-                  className={inputStyle}
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="locationDescription"
-                  className="mb-2 block font-semibold"
-                >
-                  Last Seen Location *
-                </label>
-
-                <input
-                  id="locationDescription"
-                  value={formData.locationDescription}
-                  onChange={(event) =>
-                    updateField(
-                      "locationDescription",
                       event.target.value,
                     )
                   }
@@ -664,7 +663,7 @@ export default function EditDogReportPage() {
                 />
               </div>
 
-              <label className="flex items-center gap-3 rounded-md border border-[#9bd8c9] p-3 md:col-span-2">
+              <label className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 md:col-span-2">
                 <input
                   type="checkbox"
                   checked={formData.timeIsApproximate}
@@ -674,9 +673,10 @@ export default function EditDogReportPage() {
                       event.target.checked,
                     )
                   }
+                  className="h-4 w-4 accent-black"
                 />
 
-                <span>
+                <span className="font-semibold">
                   Last-seen time is approximate
                 </span>
               </label>
@@ -692,20 +692,32 @@ export default function EditDogReportPage() {
                 )
               }
               placeholder="What happened?"
-              className={`${inputStyle} mt-4 h-28`}
+              className={`${inputStyle} mt-5 h-28 resize-none`}
             />
           </section>
 
           {/* REWARD */}
 
-          <section className="rounded-xl border border-[#1b5b51] bg-[#06483f] p-6">
-            <h2 className="mb-5 text-2xl font-bold">
-              Reward
-            </h2>
+          <section className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+            <div className="mb-7 flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+                03
+              </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  Reward
+                </h2>
 
-              <label className="flex items-center gap-3 rounded-md border border-[#9bd8c9] p-3">
+                <p className="mt-1 text-gray-600">
+                  Let people know if a reward is being offered.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+
+              <label className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4">
                 <input
                   type="checkbox"
                   checked={formData.rewardOffered}
@@ -715,9 +727,10 @@ export default function EditDogReportPage() {
                       event.target.checked,
                     )
                   }
+                  className="h-4 w-4 accent-black"
                 />
 
-                <span>
+                <span className="font-semibold">
                   Reward offered
                 </span>
               </label>
@@ -734,8 +747,9 @@ export default function EditDogReportPage() {
                     event.target.value,
                   )
                 }
+                disabled={!formData.rewardOffered}
                 placeholder="Reward amount"
-                className={inputStyle}
+                className={`${inputStyle} disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400`}
               />
 
             </div>
@@ -744,10 +758,9 @@ export default function EditDogReportPage() {
           {/* ACTIONS */}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-
             <Link
               href={`/dogs/${params.id}`}
-              className="rounded-md border border-[#1b5b51] px-6 py-3 text-center font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
+              className="rounded-md border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-black transition hover:border-black hover:bg-gray-50"
             >
               Cancel
             </Link>
@@ -755,13 +768,12 @@ export default function EditDogReportPage() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-[#fbb12c] px-8 py-3 font-bold text-[#003d35] transition hover:bg-[#ffc34d] disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-md bg-[#fbb12c] px-8 py-3 font-bold text-black transition hover:bg-[#ffc34d] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving
                 ? "Saving Changes..."
                 : "Save Changes"}
             </button>
-
           </div>
 
         </form>

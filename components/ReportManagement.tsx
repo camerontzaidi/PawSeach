@@ -35,7 +35,7 @@ export default function ReportManagement({
 
   const handleMarkReunited = async () => {
     const confirmed = window.confirm(
-      "Are you sure you want to mark this pet as reunited?"
+      "Are you sure you want to mark this pet as reunited?",
     );
 
     if (!confirmed) return;
@@ -64,23 +64,20 @@ export default function ReportManagement({
         console.error("MARK REUNITED ERROR:", error);
 
         window.alert(
-          `Unable to mark the pet as reunited.\n\n${error.message}`
+          `Unable to mark the pet as reunited.\n\n${error.message}`,
         );
 
         return;
       }
 
-      // Tell the user exactly what happened
       window.alert("Moved to Found section.");
 
-      // Refresh the page so the new status appears
       router.refresh();
-
     } catch (error) {
       console.error("MARK REUNITED ERROR:", error);
 
       window.alert(
-        "Something went wrong while updating the report."
+        "Something went wrong while updating the report.",
       );
     } finally {
       setLoading(false);
@@ -93,7 +90,7 @@ export default function ReportManagement({
 
   const handleCloseReport = async () => {
     const confirmed = window.confirm(
-      "Are you sure you want to close this report?"
+      "Are you sure you want to close this report?",
     );
 
     if (!confirmed) return;
@@ -122,7 +119,7 @@ export default function ReportManagement({
         console.error("CLOSE REPORT ERROR:", error);
 
         window.alert(
-          `Unable to close the report.\n\n${error.message}`
+          `Unable to close the report.\n\n${error.message}`,
         );
 
         return;
@@ -131,12 +128,11 @@ export default function ReportManagement({
       window.alert("Moved to Closed section.");
 
       router.refresh();
-
     } catch (error) {
       console.error("CLOSE REPORT ERROR:", error);
 
       window.alert(
-        "Something went wrong while closing the report."
+        "Something went wrong while closing the report.",
       );
     } finally {
       setLoading(false);
@@ -144,25 +140,21 @@ export default function ReportManagement({
   };
 
   return (
-    <section className="mt-6 rounded-xl border border-[#1b5b51] bg-[#003d35] p-5 sm:p-6">
-
-      <h3 className="text-xl font-bold">
+    <section className="mt-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+      <h3 className="text-xl font-bold text-black">
         Manage Report
       </h3>
 
-      <p className="mt-2 text-sm leading-relaxed text-[#b7d5ce]">
+      <p className="mt-2 text-sm leading-relaxed text-gray-600">
         Update or change the status of your report.
       </p>
 
       <div className="mt-5 flex flex-wrap gap-3">
-
         {/* EDIT */}
         <Link
           href={`/dogs/${reportId}/edit`}
-          className={`rounded-md bg-[#078c78] px-5 py-3 font-bold text-white transition hover:bg-[#067966] ${
-            loading
-              ? "pointer-events-none opacity-50"
-              : ""
+          className={`rounded-md bg-[#fbb12c] px-5 py-3 font-bold text-black transition hover:brightness-95 ${
+            loading ? "pointer-events-none opacity-50" : ""
           }`}
         >
           Edit Report
@@ -174,7 +166,7 @@ export default function ReportManagement({
             type="button"
             onClick={handleCloseReport}
             disabled={loading}
-            className="rounded-md border border-[#fbb12c] px-5 py-3 font-bold text-[#fbb12c] transition hover:bg-[#fbb12c] hover:text-[#003d35] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border border-gray-300 bg-white px-5 py-3 font-bold text-black transition hover:border-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Updating..." : "Close Report"}
           </button>
@@ -186,30 +178,24 @@ export default function ReportManagement({
             type="button"
             onClick={handleMarkReunited}
             disabled={loading}
-            className="rounded-md border border-[#078c78] px-5 py-3 font-bold text-[#078c78] transition hover:bg-[#078c78] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border border-gray-300 bg-white px-5 py-3 font-bold text-black transition hover:border-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading
-              ? "Updating..."
-              : "Mark Reunited"}
+            {loading ? "Updating..." : "Mark Reunited"}
           </button>
         )}
-
       </div>
 
       {/* CURRENT STATUS */}
 
-      <div className="mt-5 border-t border-[#1b5b51] pt-5">
-
-        <p className="text-sm text-[#9bbab3]">
+      <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+        <p className="text-sm font-semibold text-gray-500">
           Current status
         </p>
 
-        <p className="mt-1 font-bold capitalize text-[#c3ded8]">
+        <p className="mt-1 font-bold capitalize text-black">
           {normalizedStatus.replaceAll("_", " ")}
         </p>
-
       </div>
-
     </section>
   );
 }

@@ -18,18 +18,18 @@ type Conversation = {
 
 function statusClasses(status: Conversation["status"]) {
   if (status === "accepted") {
-    return "border border-emerald-300/70 bg-emerald-400/30 text-emerald-50";
+    return "border-gray-300 bg-gray-100 text-gray-700";
   }
 
   if (status === "declined") {
-    return "border border-rose-300/70 bg-rose-400/30 text-rose-50";
+    return "border-gray-300 bg-gray-50 text-gray-500";
   }
 
-  return "border border-[#fbb12c]/80 bg-[#fbb12c]/25 text-[#ffe2a0]";
+  return "border-[#fbb12c] bg-[#fff7df] text-gray-800";
 }
 
 function statusLabel(status: Conversation["status"]) {
-  return status.toUpperCase();
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 export default async function MessagesPage() {
@@ -71,62 +71,78 @@ export default async function MessagesPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
+    <main className="min-h-screen bg-gradient-to-r from-white via-[#e4e4e4] to-[#b5b5b5] px-6 py-12 sm:py-16">
       <div className="mx-auto max-w-5xl">
-        <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
-          PawSearch Messaging
-        </span>
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+            PawSearch
+          </p>
 
-        <h1 className="mt-2 text-4xl font-bold sm:text-5xl">Messages</h1>
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-black sm:text-5xl">
+            Messages
+          </h1>
 
-        <p className="mt-3 max-w-2xl text-lg text-[#b7d5ce]">
-          Review incoming message requests and continue conversations you have
-          accepted.
-        </p>
+          <p className="mt-3 max-w-2xl text-lg text-gray-600">
+            Review message requests and continue conversations about missing
+            and found pets.
+          </p>
+        </div>
 
-        <section className="mt-10">
-          <div>
-            <h2 className="text-2xl font-bold">Message Requests</h2>
-            <p className="mt-1 text-sm text-[#b7d5ce]">
-              {incomingRequests.length} pending
-            </p>
+        <section className="mt-10 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex items-center gap-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+              01
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-black">
+                Message Requests
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                {incomingRequests.length}{" "}
+                {incomingRequests.length === 1 ? "pending request" : "pending requests"}
+              </p>
+            </div>
           </div>
 
           {incomingRequests.length === 0 ? (
-            <div className="mt-5 rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 text-[#b7d5ce]">
+            <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-6 text-gray-500">
               You do not have any pending message requests.
             </div>
           ) : (
-            <div className="mt-5 space-y-4">
+            <div className="mt-6 space-y-4">
               {incomingRequests.map((conversation) => (
                 <Link
                   key={conversation.id}
                   href={`/messages/${conversation.id}`}
-                  className="block rounded-xl border border-[#fbb12c]/50 bg-[#06483f] p-6 transition hover:border-[#fbb12c]"
+                  className="block rounded-2xl border border-gray-200 bg-white p-6 transition hover:border-[#fbb12c] hover:shadow-sm"
                 >
                   <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#9bbab3]">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
                         Pet
                       </p>
-                      <p className="mt-1 text-xl font-bold">
+
+                      <p className="mt-1 text-xl font-bold text-black">
                         {conversation.dog_name}
                       </p>
 
-                      <p className="mt-4 text-xs font-bold uppercase tracking-wider text-[#9bbab3]">
+                      <p className="mt-4 text-xs font-bold uppercase tracking-wider text-gray-400">
                         Message from
                       </p>
-                      <p className="mt-1 text-[#c3ded8]">
+
+                      <p className="mt-1 text-gray-700">
                         {conversation.requester_name}
                       </p>
 
-                      <p className="mt-4 line-clamp-2 text-sm text-[#b7d5ce]">
+                      <p className="mt-4 line-clamp-2 text-sm text-gray-500">
                         “{conversation.initial_message}”
                       </p>
                     </div>
 
                     <span
-                      className={`inline-flex min-h-10 min-w-28 shrink-0 items-center justify-center rounded-full px-4 py-2 text-center text-xs font-extrabold tracking-wide ${statusClasses(
+                      className={`inline-flex min-h-10 min-w-28 shrink-0 items-center justify-center rounded-full border px-4 py-2 text-center text-xs font-bold ${statusClasses(
                         conversation.status,
                       )}`}
                     >
@@ -139,17 +155,32 @@ export default async function MessagesPage() {
           )}
         </section>
 
-        <section className="mt-12">
-          <h2 className="text-2xl font-bold">Conversations</h2>
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex items-center gap-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+              02
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-black">
+                Conversations
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Your existing message conversations
+              </p>
+            </div>
+          </div>
 
           {otherConversations.length === 0 ? (
-            <div className="mt-5 rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 text-[#b7d5ce]">
+            <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-6 text-gray-500">
               No other conversations yet.
             </div>
           ) : (
-            <div className="mt-5 space-y-4">
+            <div className="mt-6 space-y-4">
               {otherConversations.map((conversation) => {
                 const isOwner = conversation.owner_id === user.id;
+
                 const otherPerson = isOwner
                   ? conversation.requester_name
                   : conversation.owner_name || "Pet Owner";
@@ -162,27 +193,29 @@ export default async function MessagesPage() {
                   <Link
                     key={conversation.id}
                     href={`/messages/${conversation.id}`}
-                    className="block rounded-xl border border-[#1b5b51] bg-[#06483f] p-6 transition hover:border-[#fbb12c]"
+                    className="block rounded-2xl border border-gray-200 bg-white p-6 transition hover:border-[#fbb12c] hover:shadow-sm"
                   >
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-[#9bbab3]">
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
                           Pet
                         </p>
-                        <p className="mt-1 text-xl font-bold">
+
+                        <p className="mt-1 text-xl font-bold text-black">
                           {conversation.dog_name}
                         </p>
 
-                        <p className="mt-4 text-xs font-bold uppercase tracking-wider text-[#9bbab3]">
+                        <p className="mt-4 text-xs font-bold uppercase tracking-wider text-gray-400">
                           {personLabel}
                         </p>
-                        <p className="mt-1 text-[#c3ded8]">
+
+                        <p className="mt-1 text-gray-700">
                           {otherPerson}
                         </p>
                       </div>
 
                       <span
-                        className={`inline-flex min-h-10 min-w-28 shrink-0 items-center justify-center rounded-full px-4 py-2 text-center text-xs font-extrabold tracking-wide ${statusClasses(
+                        className={`inline-flex min-h-10 min-w-28 shrink-0 items-center justify-center rounded-full border px-4 py-2 text-center text-xs font-bold ${statusClasses(
                           conversation.status,
                         )}`}
                       >

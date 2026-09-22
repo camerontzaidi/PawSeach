@@ -108,10 +108,7 @@ export default async function DashboardPage() {
         .order("is_primary", { ascending: false });
 
     if (photosError) {
-      console.error(
-        "Error loading dog photos:",
-        photosError,
-      );
+      console.error("Error loading dog photos:", photosError);
     }
 
     dogPhotos = (photosData ?? []) as DogPhoto[];
@@ -148,9 +145,7 @@ export default async function DashboardPage() {
   function formatStatus(status: string) {
     return status
       .replaceAll("_", " ")
-      .replace(/\b\w/g, (letter) =>
-        letter.toUpperCase(),
-      );
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
   // --------------------------------------------------
@@ -162,14 +157,11 @@ export default async function DashboardPage() {
       return "Date unavailable";
     }
 
-    return new Date(date).toLocaleDateString(
-      "en-US",
-      {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      },
-    );
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
   }
 
   // --------------------------------------------------
@@ -186,12 +178,10 @@ export default async function DashboardPage() {
     const photo = getDogPhoto(dog.id);
 
     return (
-      <article
-        className="overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f]"
-      >
+      <article className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
         {/* PHOTO */}
 
-        <div className="flex h-48 items-center justify-center bg-[#00342e]">
+        <div className="flex h-56 items-center justify-center bg-gray-100">
           {photo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -200,80 +190,66 @@ export default async function DashboardPage() {
               className="h-full w-full object-cover"
             />
           ) : (
-            <span className="text-7xl">
-              🐕
-            </span>
+            <span className="text-7xl">🐕</span>
           )}
         </div>
 
         <div className="p-6">
-
           {/* NAME + STATUS */}
 
           <div className="flex items-start justify-between gap-4">
-
-            <div>
-              <h3 className="text-2xl font-bold">
+            <div className="min-w-0">
+              <h3 className="text-2xl font-bold text-black">
                 {dog.dog_name}
               </h3>
 
-              <p className="mt-1 text-[#b7d5ce]">
+              <p className="mt-1 text-gray-500">
                 {dog.breed || "Unknown breed"}
               </p>
             </div>
 
             <span
-              className={`rounded-full px-3 py-1 text-xs font-bold ${
+              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold ${
                 found
-                  ? "bg-[#078c78] text-white"
-                  : "bg-[#fbb12c] text-[#003d35]"
+                  ? "border-gray-300 bg-gray-100 text-gray-700"
+                  : dog.status.toLowerCase() === "closed"
+                    ? "border-gray-300 bg-gray-50 text-gray-500"
+                    : "border-[#fbb12c] bg-[#fff7df] text-gray-800"
               }`}
             >
-              {found
-                ? "Found"
-                : formatStatus(dog.status)}
+              {found ? "Reunited" : formatStatus(dog.status)}
             </span>
-
           </div>
 
           {/* LOCATION / DATE */}
 
-          <div className="mt-5 space-y-2 text-sm text-[#c3ded8]">
-
+          <div className="mt-5 space-y-2 text-sm text-gray-600">
             {dog.location_description && (
-              <p>
-                📍 {dog.location_description}
-              </p>
+              <p>📍 {dog.location_description}</p>
             )}
 
             {dog.last_seen_at && (
-              <p>
-                📅 {formatDate(dog.last_seen_at)}
-              </p>
+              <p>📅 {formatDate(dog.last_seen_at)}</p>
             )}
-
           </div>
 
           {/* ACTIONS */}
 
           <div className="mt-6 flex flex-wrap gap-3">
-
-          <Link
-            href={`/dashboard/dogs/${dog.id}`}
-            className="rounded-md border border-[#1b5b51] px-4 py-2 font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
-          >
-            View / Change Status
-          </Link>
+            <Link
+              href={`/dashboard/dogs/${dog.id}`}
+              className="rounded-xl border border-gray-300 px-4 py-2 font-semibold text-black transition hover:border-[#fbb12c] hover:bg-gray-50"
+            >
+              View / Change Status
+            </Link>
 
             <Link
               href={`/dogs/${dog.id}/edit`}
-              className="rounded-md bg-[#078c78] px-4 py-2 font-bold text-white transition hover:bg-[#067966]"
+              className="rounded-xl bg-black px-4 py-2 font-bold text-white transition hover:bg-gray-800"
             >
               Edit Info
             </Link>
-
           </div>
-
         </div>
       </article>
     );
@@ -284,22 +260,20 @@ export default async function DashboardPage() {
   // --------------------------------------------------
 
   return (
-    <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
-
+    <main className="min-h-screen bg-gradient-to-r from-white via-[#e4e4e4] to-[#b5b5b5] px-6 py-12 sm:py-16">
       <div className="mx-auto max-w-6xl">
-
         {/* HEADER */}
 
         <div>
-          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+          <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
             My Reports
-          </span>
+          </p>
 
-          <h1 className="mt-2 text-4xl font-bold sm:text-5xl">
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-black sm:text-5xl">
             Manage Your Reports
           </h1>
 
-          <p className="mt-3 text-lg text-[#b7d5ce]">
+          <p className="mt-3 max-w-2xl text-lg text-gray-600">
             View and manage your missing pet reports.
           </p>
         </div>
@@ -308,109 +282,90 @@ export default async function DashboardPage() {
         {/* MISSING PET REPORTS */}
         {/* ========================================== */}
 
-        <section className="mt-12">
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+                01
+              </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-black sm:text-2xl">
+                  My Missing Pet Reports
+                </h2>
 
-            <div>
-              <h2 className="text-3xl font-bold">
-                My Missing Pet Reports
-              </h2>
-
-              <p className="mt-1 text-[#b7d5ce]">
-                {missingDogs.length}{" "}
-                {missingDogs.length === 1
-                  ? "report"
-                  : "reports"}
-              </p>
+                <p className="mt-1 text-sm text-gray-600">
+                  {missingDogs.length}{" "}
+                  {missingDogs.length === 1 ? "report" : "reports"}
+                </p>
+              </div>
             </div>
 
             <Link
               href="/report"
-              className="font-bold text-[#fbb12c] hover:text-[#ffc34d]"
+              className="font-bold text-black underline underline-offset-4 transition hover:text-gray-600 sm:mt-1"
             >
               + New Missing Report
             </Link>
-
           </div>
 
           {missingDogs.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-10 text-center">
+              <div className="text-5xl">🐕</div>
 
-            <div className="mt-6 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-10 text-center">
-
-              <div className="text-5xl">
-                🐕
-              </div>
-
-              <h3 className="mt-4 text-xl font-bold">
+              <h3 className="mt-4 text-xl font-bold text-black">
                 No missing pet reports
               </h3>
 
-              <p className="mt-2 text-[#b7d5ce]">
-                You don&apos;t have any active missing pet
-                reports.
+              <p className="mt-2 text-gray-600">
+                You don&apos;t have any active missing pet reports.
               </p>
-
             </div>
-
           ) : (
-
             <div className="mt-6 grid gap-6 md:grid-cols-2">
-
               {missingDogs.map((dog) => (
-                <DogCard
-                  key={dog.id}
-                  dog={dog}
-                />
+                <DogCard key={dog.id} dog={dog} />
               ))}
-
             </div>
-
           )}
-
         </section>
 
         {/* ========================================== */}
         {/* REUNITED PET REPORTS */}
         {/* ========================================== */}
 
-        <section className="mt-12">
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex items-start gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+              02
+            </div>
 
-          <div>
-            <h2 className="text-3xl font-bold">
-              Reunited Pets
-            </h2>
+            <div>
+              <h2 className="text-xl font-bold text-black sm:text-2xl">
+                Reunited Pets
+              </h2>
 
-            <p className="mt-1 text-[#b7d5ce]">
-              {reunitedDogs.length}{" "}
-              {reunitedDogs.length === 1
-                ? "report"
-                : "reports"}
-            </p>
+              <p className="mt-1 text-sm text-gray-600">
+                {reunitedDogs.length}{" "}
+                {reunitedDogs.length === 1 ? "report" : "reports"}
+              </p>
+            </div>
           </div>
 
           {reunitedDogs.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-10 text-center">
+              <div className="text-5xl">🎉</div>
 
-            <div className="mt-6 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-10 text-center">
-
-              <div className="text-5xl">
-                🎉
-              </div>
-
-              <h3 className="mt-4 text-xl font-bold">
+              <h3 className="mt-4 text-xl font-bold text-black">
                 No reunited pets yet
               </h3>
 
-              <p className="mt-2 text-[#b7d5ce]">
+              <p className="mt-2 text-gray-600">
                 Pets you mark as reunited will appear here.
               </p>
-
             </div>
-
           ) : (
-
             <div className="mt-6 grid gap-6 md:grid-cols-2">
-
               {reunitedDogs.map((dog) => (
                 <DogCard
                   key={dog.id}
@@ -418,69 +373,53 @@ export default async function DashboardPage() {
                   found
                 />
               ))}
-
             </div>
-
           )}
-
         </section>
 
         {/* ========================================== */}
         {/* CLOSED REPORTS */}
         {/* ========================================== */}
 
-        <section className="mt-12">
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex items-start gap-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+              03
+            </div>
 
-          <div>
-            <h2 className="text-3xl font-bold">
-              My Closed Reports
-            </h2>
+            <div>
+              <h2 className="text-xl font-bold text-black sm:text-2xl">
+                My Closed Reports
+              </h2>
 
-            <p className="mt-1 text-[#b7d5ce]">
-              {closedDogs.length}{" "}
-              {closedDogs.length === 1
-                ? "report"
-                : "reports"}
-            </p>
+              <p className="mt-1 text-sm text-gray-600">
+                {closedDogs.length}{" "}
+                {closedDogs.length === 1 ? "report" : "reports"}
+              </p>
+            </div>
           </div>
 
           {closedDogs.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-10 text-center">
+              <div className="text-5xl">📁</div>
 
-            <div className="mt-6 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-10 text-center">
-
-              <div className="text-5xl">
-                📁
-              </div>
-
-              <h3 className="mt-4 text-xl font-bold">
+              <h3 className="mt-4 text-xl font-bold text-black">
                 No closed reports
               </h3>
 
-              <p className="mt-2 text-[#b7d5ce]">
+              <p className="mt-2 text-gray-600">
                 Reports you close will appear here.
               </p>
-
             </div>
-
           ) : (
-
             <div className="mt-6 grid gap-6 md:grid-cols-2">
-
               {closedDogs.map((dog) => (
-                <DogCard
-                  key={dog.id}
-                  dog={dog}
-                />
+                <DogCard key={dog.id} dog={dog} />
               ))}
-
             </div>
-
           )}
-
         </section>
-
       </div>
     </main>
   );
 }
-

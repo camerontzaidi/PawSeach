@@ -6,8 +6,13 @@ import { createClient } from "@/utils/supabase/client";
 
 function getSafeNext() {
   if (typeof window === "undefined") return "/";
+
   const value = new URLSearchParams(window.location.search).get("next");
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/";
+
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/";
+  }
+
   return value;
 }
 
@@ -19,26 +24,34 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setMessage(null);
+
     const supabase = createClient();
     const next = getSafeNext();
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+          next,
+        )}`,
       },
     });
 
-    if (error) setMessage(error.message);
+    if (error) {
+      setMessage(error.message);
+    }
   };
 
-  const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
+  const handleEmailLogin = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
     setMessage(null);
     setIsSubmitting(true);
 
     try {
       const supabase = createClient();
+
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
@@ -56,33 +69,57 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#003d35] px-6 py-16 text-white">
+    <main className="min-h-screen bg-gradient-to-r from-white via-[#e4e4e4] to-[#b5b5b5] px-6 py-12 sm:py-16">
       <div className="mx-auto max-w-md">
-        <h1 className="text-center text-4xl font-bold">Welcome to PawSearch</h1>
+        <div className="text-center">
+          <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+            PawSearch
+          </p>
 
-        <p className="mt-4 text-center text-[#b7d5ce]">
-          Browse without an account. Sign in to report a missing pet, manage
-          reports, or message a pet owner.
-        </p>
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-black">
+            Welcome back
+          </h1>
 
-        <section className="mt-10 rounded-xl border border-[#1b5b51] bg-[#06483f] p-8">
+          <p className="mt-3 text-sm leading-6 text-gray-600">
+            Sign in to manage your reports, message pet owners, and keep your
+            PawSearch activity in one place.
+          </p>
+        </div>
+
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+          {/* GOOGLE */}
+
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-md bg-white px-6 py-3 font-bold text-[#003d35] transition hover:scale-[1.02]"
+            className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-3 font-bold text-black transition hover:border-[#fbb12c] hover:bg-gray-50"
           >
             Continue with Google
           </button>
 
+          {/* DIVIDER */}
+
           <div className="my-6 flex items-center gap-4">
-            <div className="h-px flex-1 bg-[#1b5b51]" />
-            <span className="text-sm text-[#b7d5ce]">OR</span>
-            <div className="h-px flex-1 bg-[#1b5b51]" />
+            <div className="h-px flex-1 bg-gray-200" />
+
+            <span className="text-xs font-semibold text-gray-400">
+              OR
+            </span>
+
+            <div className="h-px flex-1 bg-gray-200" />
           </div>
 
-          <form onSubmit={handleEmailLogin} className="space-y-4">
+          {/* EMAIL LOGIN */}
+
+          <form onSubmit={handleEmailLogin} className="space-y-5">
             <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-semibold">Email</label>
+              <label
+                htmlFor="email"
+                className="mb-2 block text-sm font-semibold text-black"
+              >
+                Email
+              </label>
+
               <input
                 id="email"
                 type="email"
@@ -90,13 +127,19 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white outline-none focus:border-[#fbb12c]"
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-black outline-none transition placeholder:text-gray-400 focus:border-[#fbb12c] focus:ring-2 focus:ring-[#fbb12c]/20"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-semibold">Password</label>
+              <label
+                htmlFor="password"
+                className="mb-2 block text-sm font-semibold text-black"
+              >
+                Password
+              </label>
+
               <input
                 id="password"
                 type="password"
@@ -104,7 +147,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white outline-none focus:border-[#fbb12c]"
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-black outline-none transition placeholder:text-gray-400 focus:border-[#fbb12c] focus:ring-2 focus:ring-[#fbb12c]/20"
                 placeholder="Enter your password"
               />
             </div>
@@ -112,45 +155,78 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-md bg-[#fbb12c] px-6 py-3 font-bold text-[#003d35] disabled:opacity-60"
+              className="w-full rounded-xl bg-[#fbb12c] px-6 py-3 font-bold text-black transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
+          {/* ERROR */}
+
           {message && (
-            <p role="alert" className="mt-4 rounded-md border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <p
+              role="alert"
+              className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
               {message}
             </p>
           )}
 
-          <p className="mt-6 text-center text-sm text-[#b7d5ce]">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="font-bold text-[#fbb12c]">Create account</Link>
+          {/* SIGN UP */}
+
+          <div className="mt-6 border-t border-gray-200 pt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/signup"
+                className="font-bold text-black underline underline-offset-2 hover:text-gray-600"
+              >
+                Create account
+              </Link>
+            </p>
+          </div>
+
+          {/* TERMS */}
+
+          <p className="mt-5 text-center text-xs leading-5 text-gray-500">
+            By continuing, you agree to PawSearch&apos;s{" "}
+            <Link
+              href="/terms"
+              className="font-semibold text-black underline underline-offset-2 hover:text-gray-600"
+            >
+              Terms of Service
+            </Link>{" "}
+            and acknowledge the{" "}
+            <Link
+              href="/privacy"
+              className="font-semibold text-black underline underline-offset-2 hover:text-gray-600"
+            >
+              Privacy Policy
+            </Link>
+            .
           </p>
 
-          <p className="mt-5 text-center text-xs leading-relaxed text-[#b7d5ce]">
-            By continuing, you agree to PawSearch&apos;s{" "}
-            <Link href="/terms" className="font-semibold text-[#fbb12c]">Terms of Service</Link>{" "}
-            and acknowledge the{" "}
-            <Link href="/privacy" className="font-semibold text-[#fbb12c]">Privacy Policy</Link>.
-          </p>
+          {/* GUEST */}
 
           <div className="my-6 flex items-center gap-4">
-            <div className="h-px flex-1 bg-[#1b5b51]" />
-            <span className="text-sm text-[#b7d5ce]">OR</span>
-            <div className="h-px flex-1 bg-[#1b5b51]" />
+            <div className="h-px flex-1 bg-gray-200" />
+
+            <span className="text-xs font-semibold text-gray-400">
+              OR
+            </span>
+
+            <div className="h-px flex-1 bg-gray-200" />
           </div>
 
           <Link
             href="/"
-            className="block w-full rounded-md border border-[#1b5b51] px-6 py-3 text-center font-bold text-white"
+            className="block w-full rounded-xl border border-gray-300 px-6 py-3 text-center font-bold text-black transition hover:border-[#fbb12c] hover:bg-gray-50"
           >
             Continue Browsing as Guest
           </Link>
         </section>
 
-        <p className="mt-6 text-center text-sm text-[#b7d5ce]">
+        <p className="mt-6 text-center text-xs leading-5 text-gray-500">
           Guest access is read-only. An account is required for actions that
           create, change, or message through PawSearch.
         </p>

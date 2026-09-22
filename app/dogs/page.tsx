@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import ReportMap from "../../components/ReportMap";
+import ReportMap from "@/components/ReportMap";
 
 type SearchParams = {
   city?: string;
-  state?: string;
   zip?: string;
 };
 
@@ -22,6 +21,13 @@ type Dog = {
   status: string;
   latitude?: number | null;
   longitude?: number | null;
+};
+
+type DogPhoto = {
+  id: string;
+  dog_id: string;
+  storage_path: string;
+  is_primary: boolean;
 };
 
 type MapCenter = {
@@ -42,7 +48,6 @@ export default async function DogsPage({
   const params = await searchParams;
 
   const city = params.city?.trim() ?? "";
-  const state = params.state?.trim() ?? "";
   const zipInput = params.zip?.trim() ?? "";
 
   const zipCodes = zipInput
@@ -53,25 +58,19 @@ export default async function DogsPage({
   const supabase = await createClient();
 
   // --------------------------------------------------
-  // GET MISSING DOGS FROM DATABASE
+  // GET MISSING DOGS
   // --------------------------------------------------
 
   let query = supabase
     .from("dogs")
     .select("*")
-    .eq("status", "missing");
+    .eq("status", "missing")
+    .order("created_at", { ascending: false });
 
-  // City filter
   if (city) {
     query = query.ilike("city", `%${city}%`);
   }
 
-  // State filter
-  if (state) {
-    query = query.ilike("state", `%${state}%`);
-  }
-
-  // ZIP filter
   if (zipCodes.length > 0) {
     query = query.in("zip_code", zipCodes);
   }
@@ -89,25 +88,21 @@ export default async function DogsPage({
     console.error("DOGS TABLE ERROR:", error);
 
     return (
-      <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
+      <main className="min-h-screen bg-gradient-to-r from-white via-[#e4e4e4] to-[#b5b5b5] px-4 py-10 text-black sm:px-6 sm:py-16">
         <section className="mx-auto max-w-6xl">
-
-          <div className="rounded-2xl border border-red-400 bg-red-900/30 p-8">
-
-            <h1 className="text-3xl font-bold text-red-100">
+          <div className="rounded-3xl bg-white p-8 shadow-sm">
+            <h1 className="text-3xl font-bold">
               Unable to load missing-pet reports right now.
             </h1>
 
-            <p className="mt-4 text-red-200">
+            <p className="mt-4 text-gray-600">
               Supabase returned an error while loading the dogs table.
             </p>
 
-            <p className="mt-4 rounded-lg bg-black/30 p-4 font-mono text-sm text-red-100">
+            <p className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 font-mono text-sm text-red-700">
               {error.message}
             </p>
-
           </div>
-
         </section>
       </main>
     );
@@ -116,15 +111,72 @@ export default async function DogsPage({
   const reports = (dogs ?? []) as Dog[];
 
   // --------------------------------------------------
+  // LOAD PRIMARY PHOTOS
+  // --------------------------------------------------
+
+  const photoByDog = new Map<string, string>();
+
+  if (reports.length > 0) {
+    const { data: photoRows, error: photoError } =
+      await supabase
+        .from("dog_photos")
+        .select(
+          `
+            id,
+            dog_id,
+            storage_path,
+            is_primary
+          `,
+        )
+        .in(
+          "dog_id",
+          reports.map((dog) => dog.id),
+        )
+        .order("is_primary", {
+          ascending: false,
+        });
+
+    if (photoError) {
+      console.error(
+        "DOG PHOTOS ERROR:",
+        photoError,
+      );
+    }
+
+    for (const row of (photoRows ?? []) as DogPhoto[]) {
+      /*
+       * Only use the first photo we encounter
+       * for each dog because the query orders
+       * primary photos first.
+       */
+      if (photoByDog.has(row.dog_id)) {
+        continue;
+      }
+
+      const { data: publicUrlData } =
+        supabase.storage
+          .from("dog-photos")
+          .getPublicUrl(row.storage_path);
+
+      if (publicUrlData.publicUrl) {
+        photoByDog.set(
+          row.dog_id,
+          publicUrlData.publicUrl,
+        );
+      }
+    }
+  }
+
+  // --------------------------------------------------
   // SEARCH LABEL
   // --------------------------------------------------
 
   const searchedLocationLabel = [
     city,
-    state,
+    zipInput,
   ]
     .filter(Boolean)
-    .join(", ");
+    .join(" ");
 
   // --------------------------------------------------
   // MAP REPORTS
@@ -151,12 +203,7 @@ export default async function DogsPage({
         "Unknown breed",
 
       location:
-        [
-          dog.city,
-          dog.state,
-        ]
-          .filter(Boolean)
-          .join(", ") ||
+        dog.city ||
         "Unknown location",
 
       latitude: dog.latitude as number,
@@ -188,210 +235,187 @@ export default async function DogsPage({
   // --------------------------------------------------
 
   return (
-    <main className="min-h-screen bg-[#003d35] px-4 py-10 text-white sm:px-6 sm:py-16">
-
+    <main className="min-h-screen bg-gradient-to-r from-white via-[#e4e4e4] to-[#b5b5b5] px-4 py-10 text-black sm:px-6 sm:py-16">
       <section className="mx-auto max-w-6xl">
 
         {/* HEADER */}
 
         <div className="max-w-3xl">
-
-          <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+          <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
             Missing Pets
-          </span>
+          </p>
 
-          <h1 className="mt-2 text-4xl font-bold sm:text-5xl">
+          <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
             Search Missing Pets
           </h1>
 
-          <p className="mt-4 text-lg leading-relaxed text-[#b7d5ce]">
-            Search missing pet reports by city, state, or ZIP code
+          <p className="mt-4 text-lg leading-7 text-gray-600">
+            Search missing pet reports by city or ZIP code
             and help bring a lost animal home.
           </p>
-
         </div>
 
         {/* SEARCH CARD */}
 
-        <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-5 shadow-lg sm:p-8">
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
 
-          <div>
+          <div className="mb-7 flex items-start gap-4">
 
-            <h2 className="text-2xl font-bold">
-              Find Missing Pets
-            </h2>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+              01
+            </div>
 
-            <p className="mt-1 text-[#b7d5ce]">
-              Enter a location to narrow your search.
-            </p>
+            <div>
+              <h2 className="text-2xl font-bold">
+                Search Location
+              </h2>
+
+              <p className="mt-1 text-gray-600">
+                Enter a location to narrow your search.
+              </p>
+            </div>
 
           </div>
 
           <form
             method="get"
-            className="mt-6"
+            className="grid gap-5 md:grid-cols-2"
           >
 
-            <div className="grid gap-6 md:grid-cols-3">
+            {/* CITY */}
 
-              {/* CITY */}
+            <div>
+              <label
+                htmlFor="city"
+                className="mb-2 block font-semibold"
+              >
+                City
+              </label>
 
-              <div>
+              <input
+                id="city"
+                name="city"
+                type="text"
+                defaultValue={city}
+                placeholder="Example: Fremont"
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-black outline-none transition placeholder:text-gray-400 focus:border-[#fbb12c] focus:ring-2 focus:ring-[#fbb12c]/20"
+              />
 
-                <label
-                  htmlFor="city"
-                  className="block font-semibold"
+              <p className="mt-2 text-sm text-gray-500">
+                Search by city.
+              </p>
+            </div>
+
+            {/* ZIP */}
+
+            <div>
+              <label
+                htmlFor="zip"
+                className="mb-2 block font-semibold"
+              >
+                ZIP Code
+              </label>
+
+              <input
+                id="zip"
+                name="zip"
+                type="text"
+                defaultValue={zipInput}
+                placeholder="Example: 94536"
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-black outline-none transition placeholder:text-gray-400 focus:border-[#fbb12c] focus:ring-2 focus:ring-[#fbb12c]/20"
+              />
+
+              <p className="mt-2 text-sm text-gray-500">
+                Search by ZIP code.
+              </p>
+            </div>
+
+            {/* BUTTONS */}
+
+            <div className="flex flex-wrap gap-3 md:col-span-2">
+
+              <button
+                type="submit"
+                className="rounded-xl bg-black px-6 py-3 font-bold text-white transition hover:bg-gray-800"
+              >
+                Search Missing Pets
+              </button>
+
+              {(city || zipInput) && (
+                <Link
+                  href="/dogs"
+                  className="rounded-xl border border-gray-300 bg-white px-6 py-3 font-semibold text-black transition hover:border-gray-500 hover:bg-gray-50"
                 >
-                  City
-                </label>
-
-                <input
-                  id="city"
-                  name="city"
-                  type="text"
-                  defaultValue={city}
-                  placeholder="Example: Fremont"
-                  className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white placeholder:text-[#9bbab3] outline-none focus:border-[#fbb12c]"
-                />
-
-                <p className="mt-2 text-sm text-[#b7d5ce]">
-                  Search by city.
-                </p>
-
-              </div>
-
-              {/* STATE */}
-
-              <div>
-
-                <label
-                  htmlFor="state"
-                  className="block font-semibold"
-                >
-                  State
-                </label>
-
-                <input
-                  id="state"
-                  name="state"
-                  type="text"
-                  defaultValue={state}
-                  placeholder="Example: California"
-                  className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white placeholder:text-[#9bbab3] outline-none focus:border-[#fbb12c]"
-                />
-
-                <p className="mt-2 text-sm text-[#b7d5ce]">
-                  Search by state.
-                </p>
-
-              </div>
-
-              {/* ZIP */}
-
-              <div>
-
-                <label
-                  htmlFor="zip"
-                  className="block font-semibold"
-                >
-                  ZIP Codes
-                </label>
-
-                <input
-                  id="zip"
-                  name="zip"
-                  type="text"
-                  defaultValue={zipInput}
-                  placeholder="Example: 94538, 94536"
-                  className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white placeholder:text-[#9bbab3] outline-none focus:border-[#fbb12c]"
-                />
-
-                <p className="mt-2 text-sm text-[#b7d5ce]">
-                  Separate multiple ZIP codes with commas.
-                </p>
-
-              </div>
+                  Clear
+                </Link>
+              )}
 
             </div>
 
-            {/* SEARCH BUTTON */}
-
-            <button
-              type="submit"
-              className="mt-6 rounded-md bg-[#fbb12c] px-8 py-3 font-bold text-[#003d35] transition hover:bg-[#ffc34d]"
-            >
-              Search Missing Pets
-            </button>
-
-            {/* CLEAR */}
-
-            {(city || state || zipInput) && (
-              <Link
-                href="/dogs"
-                className="ml-3 inline-block rounded-md border border-[#1b5b51] px-8 py-3 font-semibold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
-              >
-                Clear
-              </Link>
-            )}
-
           </form>
-
         </section>
 
         {/* MAP */}
 
-        <section className="mt-8">
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
 
-          <div className="mb-4">
+          <div className="mb-6 flex items-start gap-4">
 
-            <h2 className="text-2xl font-bold">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+              02
+            </div>
 
-              {searchedLocationLabel
-                ? `Missing Pets Near ${searchedLocationLabel}`
-                : "Missing Pets Map"}
+            <div>
+              <h2 className="text-2xl font-bold">
+                {searchedLocationLabel
+                  ? `Missing Pets Near ${searchedLocationLabel}`
+                  : "Missing Pets Map"}
+              </h2>
 
-            </h2>
-
-            <p className="mt-1 text-[#b7d5ce]">
-
-              {searchedLocationLabel
-                ? `Showing missing-pet reports near ${searchedLocationLabel}.`
-                : "Explore active missing-pet reports across the United States."}
-
-            </p>
+              <p className="mt-1 text-gray-600">
+                {searchedLocationLabel
+                  ? `Showing missing-pet reports near ${searchedLocationLabel}.`
+                  : "Explore active missing-pet reports across the United States."}
+              </p>
+            </div>
 
           </div>
 
-          <ReportMap
-            reports={mapReports}
-            center={mapCenter}
-            zoom={mapZoom}
-          />
+          <div className="overflow-hidden rounded-2xl">
+            <ReportMap
+              reports={mapReports}
+              center={mapCenter}
+              zoom={mapZoom}
+            />
+          </div>
 
         </section>
 
         {/* RESULTS */}
 
-        <section className="mt-12">
+        <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
 
-          <div>
+          <div className="mb-7 flex items-start gap-4">
 
-            <h2 className="text-3xl font-bold">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+              03
+            </div>
 
-              {searchedLocationLabel
-                ? "Search Results"
-                : "Missing Pets"}
+            <div>
+              <h2 className="text-2xl font-bold">
+                {searchedLocationLabel
+                  ? "Search Results"
+                  : "Missing Pets"}
+              </h2>
 
-            </h2>
-
-            <p className="mt-1 text-[#b7d5ce]">
-
-              {reports.length}{" "}
-              {reports.length === 1
-                ? "active missing pet report"
-                : "active missing pet reports"}
-
-            </p>
+              <p className="mt-1 text-gray-600">
+                {reports.length}{" "}
+                {reports.length === 1
+                  ? "missing pet"
+                  : "missing pets"}{" "}
+                found
+              </p>
+            </div>
 
           </div>
 
@@ -399,7 +423,7 @@ export default async function DogsPage({
 
           {reports.length === 0 ? (
 
-            <div className="mt-6 rounded-2xl border border-[#1b5b51] bg-[#06483f] px-6 py-12 text-center">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 px-6 py-12 text-center">
 
               <div className="text-5xl">
                 🔎
@@ -409,12 +433,10 @@ export default async function DogsPage({
                 No missing pets found
               </h3>
 
-              <p className="mx-auto mt-2 max-w-lg text-[#b7d5ce]">
-
+              <p className="mx-auto mt-2 max-w-lg text-gray-600">
                 {searchedLocationLabel
-                  ? "No missing-pet reports match this location. Try another city, state, or ZIP code."
+                  ? "No missing-pet reports match this location. Try another city or ZIP code."
                   : 'There are currently no rows in the dogs table with a status of "missing".'}
-
               </p>
 
             </div>
@@ -423,7 +445,7 @@ export default async function DogsPage({
 
             /* RESULTS GRID */
 
-            <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
               {reports.map((dog) => {
 
@@ -433,12 +455,7 @@ export default async function DogsPage({
                   "Unknown dog";
 
                 const location =
-                  [
-                    dog.city,
-                    dog.state,
-                  ]
-                    .filter(Boolean)
-                    .join(", ") ||
+                  dog.city ||
                   "Unknown location";
 
                 const dogZip =
@@ -451,46 +468,55 @@ export default async function DogsPage({
                   dog.details ||
                   "";
 
+                const photoUrl =
+                  photoByDog.get(dog.id);
+
                 return (
 
                   <Link
                     key={dog.id}
                     href={`/dogs/${dog.id}`}
-                    className="group overflow-hidden rounded-2xl border border-[#1b5b51] bg-[#06483f] transition hover:-translate-y-1 hover:border-[#fbb12c] hover:shadow-lg"
+                    className="group overflow-hidden rounded-3xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:border-gray-400 hover:shadow-lg"
                   >
 
                     {/* PHOTO */}
 
-                    <div className="flex h-48 items-center justify-center bg-[#003d35] text-7xl">
-                      🐕
+                    <div className="relative h-64 overflow-hidden bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300">
+
+                      {photoUrl ? (
+                        <img
+                          src={photoUrl}
+                          alt={`${dogName} - missing pet`}
+                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-7xl">
+                          🐕
+                        </div>
+                      )}
+
+                      <div className="absolute right-4 top-4">
+                        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-black shadow-sm">
+                          Missing
+                        </span>
+                      </div>
+
                     </div>
 
                     {/* CONTENT */}
 
                     <div className="p-6">
 
-                      <div className="flex items-start justify-between gap-3">
+                      <h3 className="text-2xl font-bold text-black">
+                        {dogName}
+                      </h3>
 
-                        <div>
+                      <p className="mt-1 text-gray-600">
+                        {dog.breed ||
+                          "Unknown breed"}
+                      </p>
 
-                          <h3 className="text-2xl font-bold">
-                            {dogName}
-                          </h3>
-
-                          <p className="mt-1 text-[#b7d5ce]">
-                            {dog.breed ||
-                              "Unknown breed"}
-                          </p>
-
-                        </div>
-
-                        <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-bold text-red-300">
-                          Missing
-                        </span>
-
-                      </div>
-
-                      <div className="mt-5 space-y-2 text-sm text-[#c3ded8]">
+                      <div className="mt-5 space-y-2 text-sm text-gray-600">
 
                         <p>
                           📍 {location}
@@ -498,19 +524,19 @@ export default async function DogsPage({
 
                         {dogZip && (
                           <p>
-                            📮 ZIP: {dogZip}
+                            📮 {dogZip}
                           </p>
                         )}
 
                       </div>
 
                       {description && (
-                        <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-[#c3ded8]">
+                        <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-gray-500">
                           {description}
                         </p>
                       )}
 
-                      <div className="mt-5 font-bold text-[#fbb12c]">
+                      <div className="mt-5 font-bold text-black transition group-hover:text-gray-600">
                         View Full Report →
                       </div>
 
@@ -519,7 +545,6 @@ export default async function DogsPage({
                   </Link>
 
                 );
-
               })}
 
             </div>
@@ -529,7 +554,6 @@ export default async function DogsPage({
         </section>
 
       </section>
-
     </main>
   );
 }

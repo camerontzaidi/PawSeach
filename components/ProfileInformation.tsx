@@ -1,16 +1,8 @@
 "use client";
 
-import {
-  useState,
-} from "react";
-
-import {
-  useRouter,
-} from "next/navigation";
-
-import {
-  createClient,
-} from "@/utils/supabase/client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 type ProfileInformationProps = {
   initialName: string;
@@ -27,63 +19,39 @@ export default function ProfileInformation({
 }: ProfileInformationProps) {
   const router = useRouter();
 
-  const [name, setName] =
-    useState(initialName);
-
-  const [city, setCity] =
-    useState(initialCity);
-
-  const [zip, setZip] =
-    useState(initialZip);
-
-  const [editing, setEditing] =
-    useState(false);
-
-  const [saving, setSaving] =
-    useState(false);
-
-  const [saved, setSaved] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
+  const [name, setName] = useState(initialName);
+  const [city, setCity] = useState(initialCity);
+  const [zip, setZip] = useState(initialZip);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSave() {
     setSaving(true);
     setSaved(false);
     setError("");
 
-    const supabase =
-      createClient();
+    const supabase = createClient();
 
     const {
-      data: {
-        user,
-      },
+      data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
       setError(
         "You must be signed in to update your information.",
       );
-
       setSaving(false);
       return;
     }
 
-    // --------------------------------------------
-    // UPDATE ACCOUNT NAME
-    // --------------------------------------------
-
-    const {
-      error: authError,
-    } = await supabase.auth.updateUser({
-      data: {
-        name:
-          name.trim() ||
-          "User",
-      },
-    });
+    const { error: authError } =
+      await supabase.auth.updateUser({
+        data: {
+          name: name.trim() || "User",
+        },
+      });
 
     if (authError) {
       console.error(
@@ -91,35 +59,19 @@ export default function ProfileInformation({
         authError,
       );
 
-      setError(
-        authError.message,
-      );
-
+      setError(authError.message);
       setSaving(false);
       return;
     }
 
-    // --------------------------------------------
-    // UPDATE SAVED LOCATION
-    // --------------------------------------------
-
-    const {
-      error: profileError,
-    } = await supabase
-      .from("profiles")
-      .update({
-        city:
-          city.trim() ||
-          null,
-
-        zip_code:
-          zip.trim() ||
-          null,
-      })
-      .eq(
-        "id",
-        user.id,
-      );
+    const { error: profileError } =
+      await supabase
+        .from("profiles")
+        .update({
+          city: city.trim() || null,
+          zip_code: zip.trim() || null,
+        })
+        .eq("id", user.id);
 
     if (profileError) {
       console.error(
@@ -127,10 +79,7 @@ export default function ProfileInformation({
         profileError,
       );
 
-      setError(
-        profileError.message,
-      );
-
+      setError(profileError.message);
       setSaving(false);
       return;
     }
@@ -139,8 +88,6 @@ export default function ProfileInformation({
     setSaved(true);
     setEditing(false);
 
-    // Refresh server-side data so the
-    // profile header updates immediately.
     router.refresh();
   }
 
@@ -148,7 +95,6 @@ export default function ProfileInformation({
     setName(initialName);
     setCity(initialCity);
     setZip(initialZip);
-
     setEditing(false);
     setSaved(false);
     setError("");
@@ -159,7 +105,6 @@ export default function ProfileInformation({
       {/* HEADER */}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-
         <div>
           <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
             Account
@@ -169,7 +114,7 @@ export default function ProfileInformation({
             My Information
           </h2>
 
-          <p className="mt-1 text-[#b7d5ce]">
+          <p className="mt-1 text-gray-600">
             Your basic account information.
           </p>
         </div>
@@ -177,26 +122,21 @@ export default function ProfileInformation({
         {!editing && (
           <button
             type="button"
-            onClick={() =>
-              setEditing(true)
-            }
-            className="rounded-md border border-[#1b5b51] px-5 py-2.5 font-bold transition hover:border-[#fbb12c] hover:text-[#fbb12c]"
+            onClick={() => setEditing(true)}
+            className="rounded-md border border-gray-300 px-5 py-2.5 font-bold transition hover:border-black hover:bg-gray-50"
           >
             Edit Information
           </button>
         )}
-
       </div>
 
       {/* INFORMATION */}
 
       <div className="mt-6 space-y-4">
-
         {/* NAME */}
 
-        <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
-
-          <p className="text-sm text-[#9bbab3]">
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+          <p className="text-sm font-semibold text-gray-500">
             Name
           </p>
 
@@ -205,115 +145,92 @@ export default function ProfileInformation({
               type="text"
               value={name}
               onChange={(event) => {
-                setName(
-                  event.target.value,
-                );
-
+                setName(event.target.value);
                 setSaved(false);
               }}
-              className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#06483f] px-4 py-3 font-semibold text-white outline-none focus:border-[#fbb12c]"
+              className="mt-2 w-full rounded-md border border-gray-300 bg-white px-4 py-3 font-semibold text-black outline-none focus:border-black"
             />
           ) : (
-            <p className="mt-1 font-semibold">
+            <p className="mt-1 font-semibold text-black">
               {name}
             </p>
           )}
-
         </div>
 
         {/* EMAIL */}
 
-        <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
-
-          <p className="text-sm text-[#9bbab3]">
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+          <p className="text-sm font-semibold text-gray-500">
             Email
           </p>
 
-          <p className="mt-1 font-semibold">
+          <p className="mt-1 font-semibold text-black">
             {email}
           </p>
-
         </div>
 
         {/* SAVED LOCATION */}
 
-        <div className="rounded-xl border border-[#1b5b51] bg-[#003d35] p-4">
-
-          <p className="text-sm text-[#9bbab3]">
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+          <p className="text-sm font-semibold text-gray-500">
             Saved Location
           </p>
 
           {editing ? (
             <div className="mt-3 grid gap-3 md:grid-cols-2">
-
               <input
                 type="text"
                 value={city}
                 onChange={(event) => {
-                  setCity(
-                    event.target.value,
-                  );
-
+                  setCity(event.target.value);
                   setSaved(false);
                 }}
                 placeholder="City"
-                className="w-full rounded-md border border-[#1b5b51] bg-[#06483f] px-4 py-3 font-semibold text-white outline-none placeholder:text-[#9bbab3] focus:border-[#fbb12c]"
+                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 font-semibold text-black outline-none placeholder:text-gray-400 focus:border-black"
               />
 
               <input
                 type="text"
                 value={zip}
                 onChange={(event) => {
-                  setZip(
-                    event.target.value,
-                  );
-
+                  setZip(event.target.value);
                   setSaved(false);
                 }}
                 placeholder="ZIP Code"
-                className="w-full rounded-md border border-[#1b5b51] bg-[#06483f] px-4 py-3 font-semibold text-white outline-none placeholder:text-[#9bbab3] focus:border-[#fbb12c]"
+                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 font-semibold text-black outline-none placeholder:text-gray-400 focus:border-black"
               />
-
             </div>
           ) : (
-            <p className="mt-1 font-semibold">
-
+            <p className="mt-1 font-semibold text-black">
               {city || zip
                 ? `${city}${city && zip ? ", " : ""}${zip}`
                 : "No saved location"}
-
             </p>
           )}
-
         </div>
-
       </div>
 
       {/* ACTIONS */}
 
       {editing && (
         <div className="mt-6 flex flex-wrap gap-3">
-
           <button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="rounded-md bg-[#fbb12c] px-6 py-3 font-bold text-[#003d35] transition hover:bg-[#ffc34d] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md bg-[#fbb12c] px-6 py-3 font-bold text-black transition hover:bg-[#ffc34d] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {saving
-              ? "Saving..."
-              : "Save Changes"}
+            {saving ? "Saving..." : "Save Changes"}
           </button>
 
           <button
             type="button"
             onClick={handleCancel}
             disabled={saving}
-            className="rounded-md border border-[#1b5b51] px-6 py-3 font-bold transition hover:border-[#fbb12c]"
+            className="rounded-md border border-gray-300 px-6 py-3 font-bold text-black transition hover:border-black hover:bg-gray-50"
           >
             Cancel
           </button>
-
         </div>
       )}
 
@@ -322,7 +239,7 @@ export default function ProfileInformation({
       {saved && (
         <p
           role="status"
-          className="mt-4 font-semibold text-[#fbb12c]"
+          className="mt-4 font-semibold text-gray-700"
         >
           ✓ Information updated
         </p>
@@ -333,7 +250,7 @@ export default function ProfileInformation({
       {error && (
         <p
           role="alert"
-          className="mt-4 font-semibold text-red-300"
+          className="mt-4 font-semibold text-red-600"
         >
           {error}
         </p>

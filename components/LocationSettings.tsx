@@ -1,16 +1,8 @@
 "use client";
 
-import {
-  useState,
-} from "react";
-
-import {
-  useRouter,
-} from "next/navigation";
-
-import {
-  createClient,
-} from "@/utils/supabase/client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 type LocationSettingsProps = {
   initialCity: string;
@@ -23,33 +15,21 @@ export default function LocationSettings({
 }: LocationSettingsProps) {
   const router = useRouter();
 
-  const [city, setCity] =
-    useState(initialCity);
-
-  const [zip, setZip] =
-    useState(initialZip);
-
-  const [saving, setSaving] =
-    useState(false);
-
-  const [saved, setSaved] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
+  const [city, setCity] = useState(initialCity);
+  const [zip, setZip] = useState(initialZip);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSaveLocation() {
     setSaving(true);
     setSaved(false);
     setError("");
 
-    const supabase =
-      createClient();
+    const supabase = createClient();
 
     const {
-      data: {
-        user,
-      },
+      data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
@@ -61,23 +41,13 @@ export default function LocationSettings({
       return;
     }
 
-    const {
-      error: updateError,
-    } = await supabase
+    const { error: updateError } = await supabase
       .from("profiles")
       .update({
-        city:
-          city.trim() ||
-          null,
-
-        zip_code:
-          zip.trim() ||
-          null,
+        city: city.trim() || null,
+        zip_code: zip.trim() || null,
       })
-      .eq(
-        "id",
-        user.id,
-      );
+      .eq("id", user.id);
 
     if (updateError) {
       console.error(
@@ -85,10 +55,7 @@ export default function LocationSettings({
         updateError,
       );
 
-      setError(
-        updateError.message,
-      );
-
+      setError(updateError.message);
       setSaving(false);
       return;
     }
@@ -101,34 +68,29 @@ export default function LocationSettings({
   }
 
   return (
-    <section className="mt-8 rounded-2xl border border-[#1b5b51] bg-[#06483f] p-6 sm:p-8">
-
+    <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
       <div>
-
-        <span className="text-sm font-semibold uppercase tracking-wide text-[#fbb12c]">
+        <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">
           Location
-        </span>
+        </p>
 
-        <h2 className="mt-2 text-2xl font-bold">
+        <h2 className="mt-2 text-2xl font-bold text-black">
           Your Location
         </h2>
 
-        <p className="mt-2 text-[#b7d5ce]">
+        <p className="mt-2 text-gray-600">
           Save your city and ZIP code to find missing pets
           near you.
         </p>
-
       </div>
 
       <div className="mt-6 grid gap-5 md:grid-cols-2">
-
         {/* CITY */}
 
         <div>
-
           <label
             htmlFor="city"
-            className="block font-semibold"
+            className="block text-sm font-semibold text-black"
           >
             City
           </label>
@@ -138,25 +100,20 @@ export default function LocationSettings({
             type="text"
             value={city}
             onChange={(event) => {
-              setCity(
-                event.target.value,
-              );
-
+              setCity(event.target.value);
               setSaved(false);
             }}
             placeholder="Sacramento"
-            className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white outline-none placeholder:text-[#9bbab3] focus:border-[#fbb12c]"
+            className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-black outline-none placeholder:text-gray-400 focus:border-[#fbb12c] focus:ring-1 focus:ring-[#fbb12c]"
           />
-
         </div>
 
         {/* ZIP */}
 
         <div>
-
           <label
             htmlFor="zip"
-            className="block font-semibold"
+            className="block text-sm font-semibold text-black"
           >
             ZIP Code
           </label>
@@ -166,35 +123,28 @@ export default function LocationSettings({
             type="text"
             value={zip}
             onChange={(event) => {
-              setZip(
-                event.target.value,
-              );
-
+              setZip(event.target.value);
               setSaved(false);
             }}
             placeholder="95814"
-            className="mt-2 w-full rounded-md border border-[#1b5b51] bg-[#003d35] px-4 py-3 text-white outline-none placeholder:text-[#9bbab3] focus:border-[#fbb12c]"
+            className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-black outline-none placeholder:text-gray-400 focus:border-[#fbb12c] focus:ring-1 focus:ring-[#fbb12c]"
           />
-
         </div>
-
       </div>
 
       <button
         type="button"
         onClick={handleSaveLocation}
         disabled={saving}
-        className="mt-6 rounded-md bg-[#fbb12c] px-8 py-3 font-bold text-[#003d35] transition hover:bg-[#ffc34d] disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-6 rounded-xl bg-black px-8 py-3 font-bold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {saving
-          ? "Saving..."
-          : "Save Location"}
+        {saving ? "Saving..." : "Save Location"}
       </button>
 
       {saved && (
         <p
           role="status"
-          className="mt-4 font-semibold text-[#fbb12c]"
+          className="mt-4 font-semibold text-black"
         >
           ✓ Location saved
         </p>
@@ -203,12 +153,11 @@ export default function LocationSettings({
       {error && (
         <p
           role="alert"
-          className="mt-4 font-semibold text-red-300"
+          className="mt-4 font-semibold text-red-600"
         >
           {error}
         </p>
       )}
-
     </section>
   );
 }
