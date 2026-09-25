@@ -406,7 +406,7 @@ export async function submitMissingDogReport(
       success: true,
 
       message:
-        "Your missing-dog report was submitted successfully.",
+        "Your missing pet report is now live. We’ve generated personalized search recommendations below to help you decide where to look first.",
 
       dogId,
     };

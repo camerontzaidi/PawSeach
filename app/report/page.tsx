@@ -11,18 +11,14 @@ import {
 } from "./actions";
 
 import LocationPicker from "@/components/LocationPicker";
+import AiRecommendations, {
+  type AiReportInfo,
+} from "@/components/AiRecommendations";
 
 const inputStyle =
   "w-full rounded-lg border border-gray-300 bg-white p-3 text-black placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black";
 
-type SubmittedReportInfo = {
-  dogName: string;
-  breed: string;
-  city: string;
-  zipCode: string;
-  size: string;
-  locationDescription: string;
-};
+type SubmittedReportInfo = AiReportInfo;
 
 export default function ReportPage() {
   const [result, setResult] =
@@ -63,6 +59,19 @@ export default function ReportPage() {
           "locationDescription",
         ) ?? "",
       ),
+      circumstances: String(
+        formData.get("circumstances") ?? "",
+      ),
+      latitude: Number.isFinite(
+        Number(formData.get("latitude")),
+      )
+        ? Number(formData.get("latitude"))
+        : null,
+      longitude: Number.isFinite(
+        Number(formData.get("longitude")),
+      )
+        ? Number(formData.get("longitude"))
+        : null,
     };
 
     startTransition(async () => {
@@ -154,182 +163,9 @@ export default function ReportPage() {
 
         {/* AI RECOMMENDATIONS */}
 
-        {result?.success &&
-          submittedReport && (
-            <section className="mb-8 overflow-hidden rounded-3xl bg-white shadow-sm">
-              <div className="border-b border-gray-200 px-6 py-6 sm:px-8">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
-                    AI
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-bold uppercase tracking-[0.15em] text-gray-500">
-                      PawSearch
-                    </p>
-
-                    <h2 className="mt-1 text-2xl font-bold">
-                      Search Recommendations
-                    </h2>
-
-                    <p className="mt-2 text-gray-600">
-                      Suggestions based on the information
-                      in your report.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 sm:p-8">
-
-                <p className="text-lg leading-8 text-gray-700">
-                  Based on{" "}
-                  <span className="font-bold text-black">
-                    {submittedReport.dogName ||
-                      "your pet"}
-                  </span>
-                  {submittedReport.breed
-                    ? `, ${submittedReport.breed}`
-                    : ""}
-                  {submittedReport.city
-                    ? `, and the last known area in ${submittedReport.city}`
-                    : ""}
-                  {submittedReport.zipCode
-                    ? ` (${submittedReport.zipCode})`
-                    : ""}
-                  , here are some places and actions to
-                  consider checking first.
-                </p>
-
-                <div className="mt-8">
-                  <h3 className="text-xl font-bold">
-                    Recommended Areas to Check
-                  </h3>
-
-                  <div className="mt-4 grid gap-4 md:grid-cols-3">
-
-                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
-                      <p className="text-sm font-bold uppercase tracking-wide text-gray-500">
-                        01
-                      </p>
-
-                      <h4 className="mt-2 font-bold">
-                        Parks & Open Spaces
-                      </h4>
-
-                      <p className="mt-2 text-sm leading-6 text-gray-600">
-                        Check nearby parks, trails,
-                        fields, and other open areas
-                        around the last known location.
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
-                      <p className="text-sm font-bold uppercase tracking-wide text-gray-500">
-                        02
-                      </p>
-
-                      <h4 className="mt-2 font-bold">
-                        Nearby Neighborhoods
-                      </h4>
-
-                      <p className="mt-2 text-sm leading-6 text-gray-600">
-                        Ask nearby residents to check
-                        yards, garages, sheds, and
-                        other enclosed spaces.
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
-                      <p className="text-sm font-bold uppercase tracking-wide text-gray-500">
-                        03
-                      </p>
-
-                      <h4 className="mt-2 font-bold">
-                        Sheltered Areas
-                      </h4>
-
-                      <p className="mt-2 text-sm leading-6 text-gray-600">
-                        Check under porches, decks,
-                        vehicles, bushes, and other
-                        quiet sheltered areas.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8">
-                  <h3 className="text-xl font-bold">
-                    Suggested Search Strategy
-                  </h3>
-
-                  <ol className="mt-4 space-y-4">
-                    <li className="flex gap-4">
-                      <span className="font-bold">
-                        1.
-                      </span>
-
-                      <span className="text-gray-600">
-                        Start closest to the last known
-                        location
-                        {submittedReport.locationDescription
-                          ? ` (${submittedReport.locationDescription})`
-                          : ""}
-                        .
-                      </span>
-                    </li>
-
-                    <li className="flex gap-4">
-                      <span className="font-bold">
-                        2.
-                      </span>
-
-                      <span className="text-gray-600">
-                        Gradually expand your search
-                        outward instead of immediately
-                        searching far away.
-                      </span>
-                    </li>
-
-                    <li className="flex gap-4">
-                      <span className="font-bold">
-                        3.
-                      </span>
-
-                      <span className="text-gray-600">
-                        Ask nearby residents to check
-                        enclosed spaces.
-                      </span>
-                    </li>
-
-                    <li className="flex gap-4">
-                      <span className="font-bold">
-                        4.
-                      </span>
-
-                      <span className="text-gray-600">
-                        Share your PawSearch report with
-                        people in the surrounding area.
-                      </span>
-                    </li>
-                  </ol>
-                </div>
-
-                <div className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-5">
-                  <p className="text-sm leading-6 text-gray-600">
-                    <span className="font-bold text-black">
-                      PawSearch AI Note:
-                    </span>{" "}
-                    These are currently example search
-                    suggestions. Future versions can use
-                    AI and location data to identify
-                    specific nearby areas based on the
-                    report.
-                  </p>
-                </div>
-              </div>
-            </section>
-          )}
+        {result?.success && submittedReport && (
+          <AiRecommendations report={submittedReport} />
+        )}
 
         <form
           onSubmit={handleSubmit}

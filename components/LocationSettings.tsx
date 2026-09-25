@@ -6,16 +6,19 @@ import { createClient } from "@/utils/supabase/client";
 
 type LocationSettingsProps = {
   initialCity: string;
+  initialState: string;
   initialZip: string;
 };
 
 export default function LocationSettings({
   initialCity,
+  initialState,
   initialZip,
 }: LocationSettingsProps) {
   const router = useRouter();
 
   const [city, setCity] = useState(initialCity);
+  const [state, setState] = useState(initialState);
   const [zip, setZip] = useState(initialZip);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -45,6 +48,7 @@ export default function LocationSettings({
       .from("profiles")
       .update({
         city: city.trim() || null,
+        state: state.trim() || null,
         zip_code: zip.trim() || null,
       })
       .eq("id", user.id);
@@ -79,12 +83,12 @@ export default function LocationSettings({
         </h2>
 
         <p className="mt-2 text-gray-600">
-          Save your city and ZIP code to find missing pets
+          Save your city, state, and ZIP code to find missing pets
           near you.
         </p>
       </div>
 
-      <div className="mt-6 grid gap-5 md:grid-cols-2">
+      <div className="mt-6 grid gap-5 md:grid-cols-3">
         {/* CITY */}
 
         <div>
@@ -104,6 +108,29 @@ export default function LocationSettings({
               setSaved(false);
             }}
             placeholder="Sacramento"
+            className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-black outline-none placeholder:text-gray-400 focus:border-[#fbb12c] focus:ring-1 focus:ring-[#fbb12c]"
+          />
+        </div>
+
+        {/* STATE */}
+
+        <div>
+          <label
+            htmlFor="state"
+            className="block text-sm font-semibold text-black"
+          >
+            State
+          </label>
+
+          <input
+            id="state"
+            type="text"
+            value={state}
+            onChange={(event) => {
+              setState(event.target.value);
+              setSaved(false);
+            }}
+            placeholder="CA"
             className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-black outline-none placeholder:text-gray-400 focus:border-[#fbb12c] focus:ring-1 focus:ring-[#fbb12c]"
           />
         </div>
