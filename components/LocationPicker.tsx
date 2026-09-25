@@ -231,7 +231,9 @@ export default function LocationPicker({
        */
       let locationLabel = "";
 
-      if (city && state && zip) {
+      if (addressFeature?.place_name) {
+        locationLabel = addressFeature.place_name;
+      } else if (city && state && zip) {
         locationLabel = `${city}, ${state} ${zip}`;
       } else if (city && state) {
         locationLabel = `${city}, ${state}`;

@@ -348,7 +348,7 @@ export default function EditDogReportPage() {
                 </h2>
 
                 <p className="mt-1 text-gray-600">
-                  Update your pet's identifying information.
+                  Update your pet&apos;s identifying information.
                 </p>
               </div>
             </div>

@@ -11,6 +11,8 @@ const requestSchema = z.object({
   zipCode: z.string().trim().max(10).optional().default(""),
   locationDescription: z.string().trim().max(300).optional().default(""),
   circumstances: z.string().trim().max(1500).optional().default(""),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
 });
 
 const responseSchema = z.object({
@@ -234,6 +236,14 @@ Size: ${report.size || "unknown"}
 City: ${report.city || "unknown"}
 ZIP code: ${report.zipCode || "unknown"}
 Last known location: ${report.locationDescription || "not provided"}
+Coordinates: ${
+  report.latitude !== null &&
+  report.latitude !== undefined &&
+  report.longitude !== null &&
+  report.longitude !== undefined
+    ? `${report.latitude}, ${report.longitude}`
+    : "not provided"
+}
 Circumstances: ${report.circumstances || "not provided"}
 
 Return JSON with exactly these top-level keys:
@@ -255,9 +265,14 @@ Return JSON with exactly these top-level keys:
 Requirements:
 - Give 3 or 4 recommendations.
 - Give 3 to 5 ordered search-strategy steps.
-- Personalize the guidance to the supplied dog and circumstances when useful.
+- Make the LAST KNOWN LOCATION the geographic anchor for every recommendation.
+- Personalize the guidance using the dog's name, breed, size, circumstances, and exact submitted location when those details are available.
+- Prefer concrete relative guidance tied to the submitted location, such as the immediate blocks around it, nearby residential areas, quiet sheltered areas, likely travel corridors, or open spaces around that point.
+- Mention the submitted location naturally when useful instead of falling back to generic city-wide advice.
+- If coordinates are supplied, use them only as additional geographic context for the exact point the owner selected.
 - Treat all recommendations as possibilities, never as known facts about where the dog is.
 - Do not invent sightings, addresses, businesses, parks, trails, or other specific places not supplied in the report.
+- Do not invent a named landmark merely because coordinates were supplied.
 - Do not tell the user to trespass, enter unsafe locations, chase a frightened dog, or take other dangerous actions.
 - Favor practical, nearby search actions.
 - Do not include markdown. Return JSON only.
