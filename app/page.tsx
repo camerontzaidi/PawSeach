@@ -284,7 +284,7 @@ export default function HomePage() {
             {/* TEXT */}
             <div>
               <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-black">
-                3. How We're Different
+                3. How We&apos;re Different
               </p>
 
               <h2 className="text-4xl font-bold tracking-tight text-black sm:text-5xl">
@@ -332,7 +332,7 @@ export default function HomePage() {
                       </h3>
 
                       <p className="mt-2 leading-7 text-gray-600">
-                        PawSearch uses a dog's location and other details to
+                        PawSearch uses a dog&apos;s location and other details to
                         suggest areas where the dog may be more likely to be
                         found.
                       </p>
