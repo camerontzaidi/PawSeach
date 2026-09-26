@@ -58,7 +58,7 @@ export default async function MePage() {
     error: profileError,
   } = await supabase
     .from("profiles")
-    .select("city, zip_code")
+    .select("city, state, zip_code")
     .eq("id", user.id)
     .single();
 
